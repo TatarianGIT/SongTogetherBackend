@@ -2,6 +2,7 @@ import express, { Request, Response, Application } from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import passport from "passport";
 import morgan from "morgan";
 
 //For env File
@@ -21,6 +22,8 @@ app.use(
     maxAge: 3 * 24 * 60 * 60 * 1000, // 3days
   })
 );
+app.use(passport.initialize());
+app.use(passport.session());
 
 app.listen(port, () => {
   console.log(
