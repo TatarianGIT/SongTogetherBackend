@@ -1,8 +1,14 @@
-import express, { Request, Response, Application } from "express";
+import express, { Application, NextFunction } from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
+import { authRoute } from "./routes/auth.js";
 import passport from "passport";
+import cookieSession from "cookie-session";
+import "./config/passport.config.js";
+import { Request, Response } from "express";
+import { User } from "./types/index.js";
+import { isAuthenticated } from "./middleware/isAuthenticated.js";
 import morgan from "morgan";
 
 //For env File
@@ -46,6 +52,11 @@ app.use(function (request, response, next) {
     };
   }
   next();
+});
+
+app.use("/auth", authRoute);
+app.get("/protected", isAuthenticated, (req: Request & User, res: Response) => {
+  res.status(200).json({ message: "secret data" });
 });
 
 app.listen(port, () => {
