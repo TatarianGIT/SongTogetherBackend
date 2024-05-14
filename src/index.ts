@@ -22,8 +22,10 @@ app.use(
     maxAge: 3 * 24 * 60 * 60 * 1000, // 3days
   })
 );
+
 app.use(passport.initialize());
 app.use(passport.session());
+
 app.use(
   cors({
     origin: "http://localhost:5173",
@@ -31,6 +33,20 @@ app.use(
     credentials: true,
   })
 );
+
+app.use(function (request, response, next) {
+  if (request.session && !request.session.regenerate) {
+    request.session.regenerate = (cb) => {
+      cb();
+    };
+  }
+  if (request.session && !request.session.save) {
+    request.session.save = (cb) => {
+      cb();
+    };
+  }
+  next();
+});
 
 app.listen(port, () => {
   console.log(
