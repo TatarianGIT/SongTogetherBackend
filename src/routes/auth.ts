@@ -6,19 +6,23 @@ export const authRoute = Router();
 
 dotenv.config();
 
-authRoute.get("/login/success", (req, res) => {
+authRoute.get("/me", (req, res) => {
   if (req.user) {
     res.status(200).json({
-      success: true,
-      message: "successfull",
       user: req.user,
+    });
+  } else {
+    res.status(400).json({});
+  }
+});
+
+authRoute.get("/cookies", (req, res) => {
+  if (req.user) {
+    res.status(200).json({
       cookies: req.cookies,
     });
   } else {
-    res.status(400).json({
-      success: false,
-      message: "unauthorized!",
-    });
+    res.status(400).json({});
   }
 });
 
