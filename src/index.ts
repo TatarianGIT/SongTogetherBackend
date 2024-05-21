@@ -1,15 +1,12 @@
-import express, { Application, NextFunction } from "express";
+import express, { Application } from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import { authRoute } from "./routes/auth.js";
 import passport from "passport";
 import cookieSession from "cookie-session";
 import "./config/passport.config.js";
-import { Request, Response } from "express";
-import { User } from "./types/index.js";
-import { isAuthenticated } from "./middleware/isAuthenticated.js";
 import morgan from "morgan";
+import MainRoute from "./routes/index.js";
 
 //For env File
 dotenv.config();
@@ -40,24 +37,7 @@ app.use(
   })
 );
 
-app.use(function (request, response, next) {
-  if (request.session && !request.session.regenerate) {
-    request.session.regenerate = (cb) => {
-      cb();
-    };
-  }
-  if (request.session && !request.session.save) {
-    request.session.save = (cb) => {
-      cb();
-    };
-  }
-  next();
-});
-
-app.use("/auth", authRoute);
-app.get("/protected", isAuthenticated, (req: Request & User, res: Response) => {
-  res.status(200).json({ message: "secret data" });
-});
+app.use(MainRoute);
 
 app.listen(port, () => {
   console.log(

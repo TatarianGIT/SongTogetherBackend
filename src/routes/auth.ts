@@ -2,11 +2,11 @@ import { Router } from "express";
 import passport from "passport";
 import dotenv from "dotenv";
 
-export const authRoute = Router();
+const AuthRoute = Router();
 
 dotenv.config();
 
-authRoute.get("/me", (req, res) => {
+AuthRoute.get("/me", (req, res) => {
   if (req.user) {
     res.status(200).json({
       user: req.user,
@@ -16,7 +16,7 @@ authRoute.get("/me", (req, res) => {
   }
 });
 
-authRoute.get("/cookies", (req, res) => {
+AuthRoute.get("/cookies", (req, res) => {
   if (req.user) {
     res.status(200).json({
       cookies: req.cookies,
@@ -26,14 +26,14 @@ authRoute.get("/cookies", (req, res) => {
   }
 });
 
-authRoute.get("/login/failed", (req, res) => {
+AuthRoute.get("/login/failed", (req, res) => {
   res.status(401).json({
     success: false,
     message: "failure",
   });
 });
 
-authRoute.get("/logout", (req, res, next) => {
+AuthRoute.get("/logout", (req, res, next) => {
   req.logout(function (err) {
     if (err) {
       return next(err);
@@ -42,15 +42,17 @@ authRoute.get("/logout", (req, res, next) => {
   });
 });
 
-authRoute.get(
+AuthRoute.get(
   "/discord",
   passport.authenticate("discord", { scope: ["identify"] })
 );
 
-authRoute.get(
+AuthRoute.get(
   "/discord/callback",
   passport.authenticate("discord", {
     successRedirect: process.env.CLIENT_URL,
     failureRedirect: "/login/failed",
   })
 );
+
+export default AuthRoute;
