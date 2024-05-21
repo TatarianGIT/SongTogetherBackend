@@ -36,10 +36,8 @@ authRoute.get("/login/failed", (req, res) => {
 authRoute.get("/logout", (req, res, next) => {
   req.logout(function (err) {
     if (err) {
-      console.log("LOGOUT ERROR ");
       return next(err);
     }
-    console.log("LOGOUT SUCCESS ");
     res.redirect(process.env.CLIENT_URL);
   });
 });
