@@ -39,3 +39,10 @@ export type IoUserResponse = {
     };
   };
 };
+
+export type SocketUser = {
+  id: string;
+  global_name: string;
+  avatar: string;
+  banner_color: string;
+};
