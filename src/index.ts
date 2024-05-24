@@ -9,6 +9,8 @@ import morgan from "morgan";
 import MainRoute from "./routes/index.js";
 import { Server } from "socket.io";
 import { createServer } from "http";
+import { jwtDecode } from "jwt-decode";
+import { IoUserResponse } from "./types/index.js";
 
 //For env File
 dotenv.config();
@@ -48,6 +50,27 @@ const io = new Server(httpServer, {
     methods: ["GET", "POST"],
     credentials: true,
   },
+});
+
+io.use((socket, next) => {
+  try {
+    const cookies = socket.handshake.headers.cookie;
+    const sessionCookie = cookies
+      .split("; ")
+      .find((row) => row.startsWith("session="));
+    const sessionValue = sessionCookie ? sessionCookie.split("=")[1] : null;
+
+    const token = sessionValue;
+
+    const decodedToken = jwtDecode<IoUserResponse>(token, { header: true });
+
+    if (decodedToken?.passport?.user !== undefined) {
+      socket.data.userData = decodedToken.passport.user;
+      return next();
+    }
+  } catch (error) {
+    console.log("invalid token");
+  }
 });
 
 httpServer.listen(port, () => {
