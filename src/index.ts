@@ -10,7 +10,8 @@ import MainRoute from "./routes/index.js";
 import { Server } from "socket.io";
 import { createServer } from "http";
 import { jwtDecode } from "jwt-decode";
-import { IoUserResponse } from "./types/index.js";
+import { IoUserResponse, SocketUser } from "./types/index.js";
+import { addUserToList, removeUserFromList } from "./utils/socketioHelpers.js";
 
 //For env File
 dotenv.config();
@@ -71,6 +72,30 @@ io.use((socket, next) => {
   } catch (error) {
     console.log("invalid token");
   }
+});
+
+let userList: SocketUser[] = [];
+
+io.on("connection", async (socket) => {
+  const userData: SocketUser = socket.data.userData;
+
+  const { id, avatar, banner_color, global_name } = userData;
+  const user = { id, avatar, banner_color, global_name };
+
+  socket.on("userConnected", async () => {
+    userList = await addUserToList(user, userList);
+    io.emit("updateUserList", userList);
+  });
+
+  socket.on("userDisnnected", async () => {
+    userList = await removeUserFromList(user, userList);
+    io.emit("updateUserList", userList);
+  });
+
+  socket.on("disconnect", async () => {
+    userList = await removeUserFromList(user, userList);
+    io.emit("updateUserList", userList);
+  });
 });
 
 httpServer.listen(port, () => {
