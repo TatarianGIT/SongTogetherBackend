@@ -7,6 +7,8 @@ import cookieSession from "cookie-session";
 import "./config/passport.config.js";
 import morgan from "morgan";
 import MainRoute from "./routes/index.js";
+import { Server } from "socket.io";
+import { createServer } from "http";
 
 //For env File
 dotenv.config();
@@ -39,7 +41,16 @@ app.use(
 
 app.use(MainRoute);
 
-app.listen(port, () => {
+const httpServer = createServer(app);
+const io = new Server(httpServer, {
+  cors: {
+    origin: "http://localhost:5173",
+    methods: ["GET", "POST"],
+    credentials: true,
+  },
+});
+
+httpServer.listen(port, () => {
   console.log(
     `============================\nServer is running at http://localhost:${port}`
   );
