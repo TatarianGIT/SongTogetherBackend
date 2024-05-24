@@ -12,3 +12,30 @@ export type User = {
     fetchedAt: string;
   };
 };
+
+export type IoUserResponse = {
+  passport: {
+    user: {
+      id: string;
+      username: string;
+      avatar: string;
+      discriminator: string;
+      public_flags: number;
+      flags: number;
+      banner: null | any;
+      accent_color: number;
+      global_name: string;
+      avatar_decoration_data: null | any;
+      banner_color: string;
+      clan: null | any;
+      mfa_enabled: boolean;
+      locale: string;
+      premium_type: number;
+      email: string;
+      verified: boolean;
+      provider: string;
+      accessToken: string;
+      fetchedAt: string;
+    };
+  };
+};
