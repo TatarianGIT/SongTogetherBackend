@@ -6,6 +6,21 @@ const AuthRoute = Router();
 
 dotenv.config();
 
+// Workaround of an error caused by PassportJS
+AuthRoute.use(function (request, response, next) {
+  if (request.session && !request.session.regenerate) {
+    request.session.regenerate = (cb) => {
+      cb();
+    };
+  }
+  if (request.session && !request.session.save) {
+    request.session.save = (cb) => {
+      cb();
+    };
+  }
+  next();
+});
+
 AuthRoute.get("/me", (req, res) => {
   if (req.user) {
     res.status(200).json({
