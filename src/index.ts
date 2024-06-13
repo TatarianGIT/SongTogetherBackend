@@ -13,7 +13,6 @@ import { jwtDecode } from "jwt-decode";
 import { IoUserResponse, SocketUser } from "./types/index.js";
 import { addUserToList, removeUserFromList } from "./utils/socketioHelpers.js";
 
-//For env File
 dotenv.config();
 
 const app: Application = express();
