@@ -37,6 +37,7 @@
     "nodemon": "^3.1.0",
     "passport": "^0.7.0",
     "passport-discord": "^0.1.4",
-    "socket.io": "^4.7.5"
+    "socket.io": "^4.7.5",
+    "ytdl-core": "^4.11.5"
   }
 }
