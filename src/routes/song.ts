@@ -6,7 +6,7 @@ dotenv.config();
 
 const SongRoute = Router();
 
-SongRoute.post("", async (req: Request, res: Response) => {
+SongRoute.post("/search", async (req: Request, res: Response) => {
   const keywords = req.body.data.keywords;
   if (!keywords || keywords.trim() === "") {
     return res
