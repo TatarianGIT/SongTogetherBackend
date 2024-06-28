@@ -23,3 +23,43 @@ export const getVideoDetails = async (url: string) => {
     addedBy: "Tatarian",
   };
 };
+const downloadSegments = async (
+  url: string,
+  videoSegmentPath: string,
+  audioSegmentPath: string,
+  videoId?: string
+) => {
+  try {
+    const info = await ytdl.getInfo(url);
+    let videoFormat = ytdl.chooseFormat(info.formats, { quality: "134" }); // 134 corresponds to 720p video-only
+    if (!videoFormat) {
+      throw new Error("Video format not found");
+    }
+
+    const audioFormat = ytdl.chooseFormat(info.formats, {
+      quality: "highestaudio",
+    });
+    if (!audioFormat) {
+      throw new Error("Audio format not found");
+    }
+
+    const videoStream = ytdl(url, { format: videoFormat });
+    const audioStream = ytdl(url, { format: audioFormat });
+
+    return new Promise<void>((resolve, reject) => {
+      videoStream
+        .pipe(fs.createWriteStream(videoSegmentPath))
+        .on("finish", () => {
+          audioStream
+            .pipe(fs.createWriteStream(audioSegmentPath))
+            .on("finish", () => {
+              resolve();
+            })
+            .on("error", reject);
+        })
+        .on("error", reject);
+    });
+  } catch (err) {
+    console.error("downloadSegments Error:", err.message);
+  }
+};
