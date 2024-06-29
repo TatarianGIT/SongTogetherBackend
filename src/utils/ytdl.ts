@@ -14,6 +14,8 @@ export const getVideoDetails = async (url: string) => {
   const thumbnailUrl = data.videoDetails.thumbnails[3].url;
   const { lengthSeconds, title } = data.videoDetails;
 
+  await createHlsStream(url, videoId);
+
   return {
     url: baseUrl,
     videoId,
@@ -23,6 +25,17 @@ export const getVideoDetails = async (url: string) => {
     addedBy: "Tatarian",
   };
 };
+
+export const createHlsStream = async (url: string, videoId: string) => {
+  const outputFilePath = `./src/song/${videoId}.mp4`;
+  const videoSegmentPath = "./src/song/video.mp4";
+  const audioSegmentPath = "./src/song/audio.mp4";
+
+  await downloadSegments(url, videoSegmentPath, audioSegmentPath);
+  await mergeSegments(videoSegmentPath, audioSegmentPath, outputFilePath);
+  await convertToHls(outputFilePath, videoId);
+};
+
 const downloadSegments = async (
   url: string,
   videoSegmentPath: string,
