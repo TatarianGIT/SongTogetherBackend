@@ -1,10 +1,28 @@
 import { Router, Request, Response } from "express";
 import axios from "axios";
 import dotenv from "dotenv";
+import { getVideoDetails } from "../utils/ytdl.js";
+import { findFilesWithExtension } from "src/utils/helpers.js";
 
 dotenv.config();
 
 const SongRoute = Router();
+
+SongRoute.get("/get", async (req: Request, res: Response) => {
+  const m3u8Path = "./src/song/stream";
+  const extension = ".m3u8";
+
+  const { filteredFiles } = await findFilesWithExtension(m3u8Path, extension);
+  res
+    .status(200)
+    .send(`http://localhost:3000/src/song/stream/${filteredFiles[0]}`);
+});
+
+SongRoute.post("/add", async (req: Request, res: Response) => {
+  const { query } = req.body.data;
+  const songInfo = await getVideoDetails(query);
+  res.json(songInfo).status(200);
+});
 
 SongRoute.post("/search", async (req: Request, res: Response) => {
   const keywords = req.body.data.keywords;
