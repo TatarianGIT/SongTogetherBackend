@@ -1,5 +1,5 @@
 import fs from "fs";
-import ytdl, { videoInfo } from "ytdl-core";
+import ytdl, { videoInfo } from "@distube/ytdl-core";
 import ffmpeg from "fluent-ffmpeg";
 import ffmpegPath from "ffmpeg-static";
 import { convertToHls, mergeSegments } from "./ffmpeg.js";
