@@ -2,8 +2,14 @@ import path from "path";
 import fs from "fs";
 
 export const clearDirectory = async (directory: string) => {
-  for (const file of fs.readdirSync(directory)) {
-    fs.unlinkSync(path.join(directory, file));
+  try {
+    const files = await fs.promises.readdir(directory);
+    const unlinkPromises = files.map((file) =>
+      fs.promises.unlink(path.join(directory, file))
+    );
+    await Promise.all(unlinkPromises);
+  } catch (error) {
+    console.error("clearDirectory", error);
   }
 };
 
