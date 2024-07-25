@@ -1,7 +1,6 @@
 import ffmpeg from "fluent-ffmpeg";
 import ffmpegInstaller from "@ffmpeg-installer/ffmpeg";
-import fs from "fs";
-import { clearDirectory } from "./helpers.js";
+import fs from "fs/promises";
 
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
@@ -19,9 +18,9 @@ export async function mergeSegments(
         .videoCodec("copy")
         .audioCodec("copy")
         .save(output)
-        .on("end", () => {
-          fs.unlinkSync(videoSegment);
-          fs.unlinkSync(audioSegment);
+        .on("end", async () => {
+          await fs.unlink(videoSegment);
+          await fs.unlink(audioSegment);
           console.log("Merge finished");
           resolve();
         })
@@ -38,8 +37,6 @@ export async function mergeSegments(
 
 export const convertToHls = async (videoPath: string, videoId?: string) => {
   await new Promise<void>(async (resolve, reject) => {
-    await clearDirectory("./src/song/stream");
-
     console.log("Converting to HLS...");
     ffmpeg()
       .input(videoPath)
@@ -55,7 +52,7 @@ export const convertToHls = async (videoPath: string, videoId?: string) => {
       ])
       .output(`./src/song/stream/${videoId}.m3u8`)
       .on("end", async () => {
-        fs.unlinkSync(videoPath);
+        await fs.unlink(videoPath);
         console.log("Conversion to HLS finished");
         resolve();
       })
