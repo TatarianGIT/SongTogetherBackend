@@ -3,6 +3,7 @@ import ytdl, { videoInfo } from "@distube/ytdl-core";
 import ffmpeg from "fluent-ffmpeg";
 import ffmpegPath from "ffmpeg-static";
 import { convertToHls, mergeSegments } from "./ffmpeg.js";
+import { clearDirectory } from "./helpers.js";
 import { promisify } from "util";
 import { pipeline as streamPipeline } from "stream";
 
@@ -35,6 +36,7 @@ export const getVideoDetails = async (videoUrl: string) => {
 
 
 export const createHlsStream = async (url: string, videoId: string) => {
+    await clearDirectory("./src/song/stream");
   const outputFilePath = `./src/song/${videoId}.mp4`;
   const videoSegmentPath = "./src/song/video.mp4";
   const audioSegmentPath = "./src/song/audio.mp4";
