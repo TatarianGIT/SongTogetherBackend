@@ -1,16 +1,22 @@
 import { Server } from "socket.io";
 import { Server as HttpServer } from "http";
-import { 
-  IoUserResponse, 
-  SocketUser, 
-} from "../types/index.js";
+import { IoUserResponse, SocketUser, SongQueue } from "../types/index.js";
 import { addUserToList, removeUserFromList } from "./helpers.js";
 import { jwtDecode } from "jwt-decode";
+import { createHlsStream, getVideoDetails } from "../utils/ytdl.js";
+import { clearDirectory, findFilesWithExtension } from "../utils/helpers.js";
 import dotenv from "dotenv";
 
 dotenv.config();
 
 let userList: SocketUser[] = [];
+
+let prevQueue: SongQueue[] = [];
+let nextQueue: SongQueue[] | undefined = [];
+let currentSong: SongQueue | null = null;
+
+let isProcessing: boolean = false;
+let fullFilePath: string = "";
 
 const configureSocketIO = (httpServer: HttpServer) => {
   const io = new Server(httpServer, {
@@ -51,11 +57,131 @@ const configureSocketIO = (httpServer: HttpServer) => {
     userList = await addUserToList(user, userList);
     io.emit("updateUserList", userList);
 
+    socket.on("getUserList", async () => {
+      io.emit("updateUserList", userList);
+    });
+
     socket.on("disconnect", async () => {
       userList = await removeUserFromList(user, userList);
       io.emit("updateUserList", userList);
     });
 
+    // Adding new song
+    socket.on("addSong", async (body: { videoUrl: string }) => {
+      try {
+        const videoDetails = await getVideoDetails(body.videoUrl);
+        const newVideo = { ...videoDetails, addedBy: user };
+
+        if (videoDetails !== null) {
+          if (currentSong === null && nextQueue.length === 0) {
+            currentSong = newVideo;
+            await createHlsStream(currentSong.videoUrl, currentSong.videoId);
+
+            const { filteredFiles } = await findFilesWithExtension(
+              "./src/song/stream",
+              ".m3u8"
+            );
+            if (filteredFiles !== undefined) {
+              fullFilePath = `http://localhost:3000/src/song/stream/${filteredFiles[0]}`;
+              io.emit("updateStreamPath", fullFilePath);
+            }
+
+            io.emit("updateCurrentSong", currentSong);
+          } else {
+            nextQueue = [...nextQueue, newVideo];
+            io.emit("updateNextQueue", nextQueue);
+          }
+        }
+      } catch (error) {
+        console.error("socket addSong", error);
+      }
+    });
+
+    // Send path to .m3u8 file
+    socket.on("requestFile", async (filePath) => {
+      try {
+        const { filteredFiles } = await findFilesWithExtension(
+          "./src/song/stream",
+          ".m3u8"
+        );
+        fullFilePath = `http://localhost:3000/src/song/stream/${filteredFiles[0]}`;
+      } catch (error) {
+        console.error("socket requestFile", error);
+      } finally {
+        io.emit("updateStreamPath", fullFilePath);
+        fullFilePath = "";
+      }
+    });
+
+    // nextsong
+    socket.on("videoEnd", async (currentVideoId: string) => {
+      if (isProcessing) {
+        return;
+      }
+
+      try {
+        isProcessing = true;
+
+        await clearDirectory("./src/song/stream");
+
+        prevQueue = [...prevQueue, currentSong];
+
+        if (nextQueue.length > 0) {
+          currentSong = nextQueue[0];
+          nextQueue.shift();
+          await createHlsStream(currentSong.videoUrl, currentSong.videoId);
+        } else {
+          currentSong = null;
+        }
+
+        const { filteredFiles } = await findFilesWithExtension(
+          "./src/song/stream",
+          ".m3u8"
+        );
+
+        if (filteredFiles.length > 0) {
+          fullFilePath = `http://localhost:3000/src/song/stream/${filteredFiles[0]}`;
+        } else {
+          fullFilePath = "";
+        }
+      } catch (error) {
+        console.log("socket videoEnd", error);
+      } finally {
+        io.emit("updateNextQueue", nextQueue);
+        io.emit("updateStreamPath", fullFilePath);
+        io.emit("updateCurrentSong", currentSong);
+        io.emit("updatePrevQueue", prevQueue);
+        fullFilePath = "";
+        isProcessing = false;
+      }
+    });
+
+    // Sending previous song queue to frontend
+    socket.on("getPrevQueue", () => {
+      try {
+        io.emit("updatePrevQueue", prevQueue);
+      } catch (error) {
+        console.error("socket getPrevQueue", error);
+      }
+    });
+
+    // Sending current song to frontend
+    socket.on("getCurrentSong", () => {
+      try {
+        io.emit("updateCurrentSong", currentSong);
+      } catch (error) {
+        console.error("socket getCurrentSong", error);
+      }
+    });
+
+    // Sending next song queue to frontend
+    socket.on("getNextQueue", () => {
+      try {
+        io.emit("updateNextQueue", nextQueue);
+      } catch (error) {
+        console.error("socket getNextQueue", error);
+      }
+    });
   });
 };
 
