@@ -43,8 +43,7 @@ export const createHlsStream = async (url: string, videoId: string) => {
 const downloadSegments = async (
   url: string,
   videoSegmentPath: string,
-  audioSegmentPath: string,
-  videoId?: string
+  audioSegmentPath: string
 ) => {
   try {
     const info = await ytdl.getInfo(url);
