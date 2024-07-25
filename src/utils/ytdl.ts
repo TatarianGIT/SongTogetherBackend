@@ -46,12 +46,16 @@ const downloadSegments = async (
   audioSegmentPath: string
 ) => {
   try {
+    console.log("Getting info...");
     const info = await ytdl.getInfo(url);
+
+    console.log("Getting video format...");
     let videoFormat = ytdl.chooseFormat(info.formats, { quality: "134" }); // 134 corresponds to 720p video-only
     if (!videoFormat) {
       throw new Error("Video format not found");
     }
 
+    console.log("Getting audio format...");
     const audioFormat = ytdl.chooseFormat(info.formats, {
       quality: "highestaudio",
     });
@@ -62,25 +66,35 @@ const downloadSegments = async (
     const videoStream = ytdl(url, { format: videoFormat });
     const audioStream = ytdl(url, { format: audioFormat });
 
+    console.log("Getting video...");
     const videoPromise = pipeline(
       videoStream,
       fs.createWriteStream(videoSegmentPath)
     )
+      .then(() => {
+        console.log("Video segment finished");
+      })
       .catch((err) => {
         console.error("Error in video stream:", err);
         throw err;
       });
 
+    console.log("Getting audio...");
     const audioPromise = pipeline(
       audioStream,
       fs.createWriteStream(audioSegmentPath)
     )
+      .then(() => {
+        console.log("Audio segment finished");
+      })
       .catch((err) => {
         console.error("Error in audio stream:", err);
         throw err;
       });
 
     await Promise.all([videoPromise, audioPromise]);
+
+    console.log("Both video and audio segments finished");
   } catch (err) {
     console.error("downloadSegments Error:", err.message);
   }
