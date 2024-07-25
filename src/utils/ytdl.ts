@@ -3,6 +3,10 @@ import ytdl, { videoInfo } from "@distube/ytdl-core";
 import ffmpeg from "fluent-ffmpeg";
 import ffmpegPath from "ffmpeg-static";
 import { convertToHls, mergeSegments } from "./ffmpeg.js";
+import { promisify } from "util";
+import { pipeline as streamPipeline } from "stream";
+
+const pipeline = promisify(streamPipeline);
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
@@ -59,19 +63,25 @@ const downloadSegments = async (
     const videoStream = ytdl(url, { format: videoFormat });
     const audioStream = ytdl(url, { format: audioFormat });
 
-    return new Promise<void>((resolve, reject) => {
-      videoStream
-        .pipe(fs.createWriteStream(videoSegmentPath))
-        .on("finish", () => {
-          audioStream
-            .pipe(fs.createWriteStream(audioSegmentPath))
-            .on("finish", () => {
-              resolve();
-            })
-            .on("error", reject);
-        })
-        .on("error", reject);
-    });
+    const videoPromise = pipeline(
+      videoStream,
+      fs.createWriteStream(videoSegmentPath)
+    )
+      .catch((err) => {
+        console.error("Error in video stream:", err);
+        throw err;
+      });
+
+    const audioPromise = pipeline(
+      audioStream,
+      fs.createWriteStream(audioSegmentPath)
+    )
+      .catch((err) => {
+        console.error("Error in audio stream:", err);
+        throw err;
+      });
+
+    await Promise.all([videoPromise, audioPromise]);
   } catch (err) {
     console.error("downloadSegments Error:", err.message);
   }
