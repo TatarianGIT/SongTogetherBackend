@@ -11,21 +11,28 @@ MainRoute.use("/song", isAuthenticated, SongRoute);
 
 // Serve static files
 MainRoute.use("", async (req: Request, res: Response) => {
-  var filePath = "." + req.url;
+  try {
+    const baseDirectory = "./src/song/stream";
+    const filePath = "." + req.url;
 
-  fs.readFile(filePath, function (error, content) {
-    if (error) {
-      console.log(error);
-      if (error.code == "ENOENT") {
-        res.json({ message: "File does not exist" }).status(400);
-      } else {
-        res.json({ message: "Unexpected error occured" }).status(400);
-      }
+    if (!filePath.startsWith(baseDirectory)) {
+      return res
+        .status(400)
+        .json({ message: "Access to this directory is forbidden" });
     } else {
-      res.writeHead(200, { "Content-Type": "application/vnd.apple.mpegurl" });
-      res.end(content, "utf-8");
     }
-  });
+
+    fs.readFile(filePath, (error, content) => {
+      if (error) {
+        return res.status(400).json({ message: "Unexpected error occurred" });
+      } else {
+        res.writeHead(200, { "Content-Type": "application/vnd.apple.mpegurl" });
+        res.end(content, "utf-8");
+      }
+    });
+  } catch (error) {
+    console.error("mainRoute file request:", error);
+  }
 });
 
 export default MainRoute;
