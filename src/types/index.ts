@@ -46,3 +46,12 @@ export type SocketUser = {
   avatar: string;
   banner_color: string;
 };
+
+export type SongQueue = {
+  videoUrl: string;
+  videoId: string | null;
+  title: string;
+  lengthSeconds: string;
+  thumbnailUrl: string;
+  addedBy: SocketUser;
+};
