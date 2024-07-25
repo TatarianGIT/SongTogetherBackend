@@ -10,25 +10,29 @@ const pipeline = promisify(streamPipeline);
 
 ffmpeg.setFfmpegPath(ffmpegPath);
 
-export const getVideoDetails = async (url: string) => {
-  const data: videoInfo = await ytdl.getInfo(url);
-  const videoId = ytdl.getVideoID(url);
+export const getVideoDetails = async (videoUrl: string) => {
+  try {
+    const data: videoInfo = await ytdl.getInfo(videoUrl);
+    const videoId = ytdl.getVideoID(videoUrl);
 
-  const { baseUrl } = data;
   const thumbnailUrl = data.videoDetails.thumbnails[3].url;
   const { lengthSeconds, title } = data.videoDetails;
 
-  await createHlsStream(url, videoId);
-
-  return {
-    url: baseUrl,
+    const videoDetails = {
+      videoUrl,
     videoId,
     title,
     lengthSeconds,
     thumbnailUrl,
-    addedBy: "Tatarian",
-  };
+    };
+
+    return videoDetails;
+  } catch (error) {
+    console.error("getVideoDetails:", error);
+    return null;
+  }
 };
+
 
 export const createHlsStream = async (url: string, videoId: string) => {
   const outputFilePath = `./src/song/${videoId}.mp4`;
