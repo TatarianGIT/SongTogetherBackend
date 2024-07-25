@@ -16,7 +16,7 @@ export const findFilesWithExtension = async (
     const filteredFiles = files.filter((file) => path.extname(file) === ext);
     return { filteredFiles };
   } catch (err) {
-    console.log(err);
+    console.log("findFilesWithExtension", err);
     return null;
   }
 };
