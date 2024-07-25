@@ -9,7 +9,7 @@ const MainRoute = Router();
 MainRoute.use("/auth", AuthRoute);
 MainRoute.use("/song", isAuthenticated, SongRoute);
 
-//stream song
+// Serve static files
 MainRoute.use("", async (req: Request, res: Response) => {
   var filePath = "." + req.url;
 
