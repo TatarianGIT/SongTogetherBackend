@@ -16,15 +16,15 @@ export const getVideoDetails = async (videoUrl: string) => {
     const data: videoInfo = await ytdl.getInfo(videoUrl);
     const videoId = ytdl.getVideoID(videoUrl);
 
-  const thumbnailUrl = data.videoDetails.thumbnails[3].url;
-  const { lengthSeconds, title } = data.videoDetails;
+    const thumbnailUrl = data.videoDetails.thumbnails[3].url;
+    const { lengthSeconds, title } = data.videoDetails;
 
     const videoDetails = {
       videoUrl,
-    videoId,
-    title,
-    lengthSeconds,
-    thumbnailUrl,
+      videoId,
+      title,
+      lengthSeconds,
+      thumbnailUrl,
     };
 
     return videoDetails;
@@ -34,16 +34,33 @@ export const getVideoDetails = async (videoUrl: string) => {
   }
 };
 
+let isProcessing = false;
 
 export const createHlsStream = async (url: string, videoId: string) => {
-    await clearDirectory("./src/song/stream");
-  const outputFilePath = `./src/song/${videoId}.mp4`;
-  const videoSegmentPath = "./src/song/video.mp4";
-  const audioSegmentPath = "./src/song/audio.mp4";
+  if (isProcessing) {
+    console.log("Processing already in progress. Skipping this call.");
+    return;
+  }
 
-  await downloadSegments(url, videoSegmentPath, audioSegmentPath);
-  await mergeSegments(videoSegmentPath, audioSegmentPath, outputFilePath);
-  await convertToHls(outputFilePath, videoId);
+  isProcessing = true;
+
+  try {
+    console.log(`Creation of HLS stream for ${videoId} started.`);
+    await clearDirectory("./src/song/stream");
+    const outputFilePath = `./src/song/${videoId}.mp4`;
+    const videoSegmentPath = "./src/song/video.mp4";
+    const audioSegmentPath = "./src/song/audio.mp4";
+
+    console.log("Downloading segments...");
+    await downloadSegments(url, videoSegmentPath, audioSegmentPath);
+    console.log("Merging segments...");
+    await mergeSegments(videoSegmentPath, audioSegmentPath, outputFilePath);
+    await convertToHls(outputFilePath, videoId);
+  } catch (error) {
+    console.error("createHlsStream", error);
+  } finally {
+    isProcessing = false;
+  }
 };
 
 const downloadSegments = async (
