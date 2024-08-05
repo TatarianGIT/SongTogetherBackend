@@ -1,10 +1,13 @@
 {
+  "engines": {
+    "node": ">=20.6.0"
+  },
   "name": "song-together-backend",
   "version": "1.0.0",
   "description": "",
-  "main": "index.ts",
+  "main": "index.js",
   "scripts": {
-    "build": "npx tsc",
+    "build": "tsc",
     "start": "node dist/index.js",
     "dev": "node --env-file=.env --watch -r ts-node/register src/index.ts",
     "db:generate": "drizzle-kit generate",
@@ -15,8 +18,10 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/better-sqlite3": "^7.6.11",
     "@types/cors": "^2.8.17",
     "@types/express": "^4.17.21",
+    "@types/fluent-ffmpeg": "^2.1.25",
     "@types/node": "^20.12.12",
     "@types/passport-discord": "^0.1.13",
     "drizzle-kit": "^0.23.0",
@@ -25,7 +30,7 @@
     "typescript": "^5.4.5"
   },
   "dependencies": {
-    "@distube/ytdl-core": "^4.13.5",
+    "@distube/ytdl-core": "^4.14.2",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@types/cookie-parser": "^1.4.7",
     "@types/cookie-session": "^2.0.49",
