@@ -1,8 +1,8 @@
 import { NextFunction, Response, Request } from "express";
-import { User } from "src/types";
+import { User } from "../types";
 
 export const isAuthenticated = (
-  req: Request & User,
+  req: Request,
   res: Response,
   next: NextFunction
 ) => {

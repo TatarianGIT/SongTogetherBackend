@@ -2,14 +2,14 @@ import fs from "fs";
 import ytdl, { videoInfo } from "@distube/ytdl-core";
 import ffmpeg from "fluent-ffmpeg";
 import ffmpegPath from "ffmpeg-static";
-import { convertToHls, mergeSegments } from "./ffmpeg.js";
-import { clearDirectory } from "./helpers.js";
+import { clearDirectory } from "./helpers";
 import { promisify } from "util";
 import { pipeline as streamPipeline } from "stream";
+import { convertToHls, mergeSegments } from "./ffmpeg";
 
 const pipeline = promisify(streamPipeline);
 
-ffmpeg.setFfmpegPath(ffmpegPath);
+ffmpeg.setFfmpegPath(ffmpegPath!);
 
 export const getVideoDetails = async (videoUrl: string) => {
   try {
@@ -118,7 +118,7 @@ const downloadSegments = async (
     await Promise.all([videoPromise, audioPromise]);
 
     console.log("Both video and audio segments finished");
-  } catch (err) {
+  } catch (err: any) {
     console.error("downloadSegments Error:", err.message);
   }
 };

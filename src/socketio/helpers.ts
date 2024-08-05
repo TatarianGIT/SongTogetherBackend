@@ -1,4 +1,4 @@
-import { SocketUser } from "src/types";
+import { SocketUser } from "../types";
 
 const sortUserList = async ({
   userList,

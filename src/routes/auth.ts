@@ -9,12 +9,12 @@ dotenv.config();
 // Workaround of an error caused by PassportJS
 AuthRoute.use(function (request, response, next) {
   if (request.session && !request.session.regenerate) {
-    request.session.regenerate = (cb) => {
+    request.session.regenerate = (cb: any) => {
       cb();
     };
   }
   if (request.session && !request.session.save) {
-    request.session.save = (cb) => {
+    request.session.save = (cb: any) => {
       cb();
     };
   }
@@ -53,7 +53,7 @@ AuthRoute.get("/logout", (req, res, next) => {
     if (err) {
       return next(err);
     }
-    res.redirect(process.env.CLIENT_URL);
+    res.redirect(process.env.CLIENT_URL as string);
   });
 });
 

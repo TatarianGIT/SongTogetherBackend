@@ -1,10 +1,10 @@
 import { Server } from "socket.io";
 import { Server as HttpServer } from "http";
-import { IoUserResponse, SocketUser, SongQueue } from "../types/index.js";
-import { addUserToList, removeUserFromList } from "./helpers.js";
+import { IoUserResponse, SocketUser, SongQueue } from "../types/index";
+import { addUserToList, removeUserFromList } from "./helpers";
 import { jwtDecode } from "jwt-decode";
-import { createHlsStream, getVideoDetails } from "../utils/ytdl.js";
-import { clearDirectory, findFilesWithExtension } from "../utils/helpers.js";
+import { createHlsStream, getVideoDetails } from "../utils/ytdl";
+import { clearDirectory, findFilesWithExtension } from "../utils/helpers";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -12,7 +12,7 @@ dotenv.config();
 let userList: SocketUser[] = [];
 
 let prevQueue: SongQueue[] = [];
-let nextQueue: SongQueue[] | undefined = [];
+let nextQueue: SongQueue[] = [];
 let currentSong: SongQueue | null = null;
 
 let isProcessing: boolean = false;
@@ -30,14 +30,14 @@ const configureSocketIO = (httpServer: HttpServer) => {
   io.use((socket, next) => {
     try {
       const cookies = socket.handshake.headers.cookie;
-      const sessionCookie = cookies
+      const sessionCookie = cookies!
         .split("; ")
         .find((row) => row.startsWith("session="));
       const sessionValue = sessionCookie ? sessionCookie.split("=")[1] : null;
 
       const token = sessionValue;
 
-      const decodedToken = jwtDecode<IoUserResponse>(token, { header: true });
+      const decodedToken = jwtDecode<IoUserResponse>(token!, { header: true });
 
       if (decodedToken?.passport?.user !== undefined) {
         socket.data.userData = decodedToken.passport.user;
@@ -70,12 +70,12 @@ const configureSocketIO = (httpServer: HttpServer) => {
     socket.on("addSong", async (body: { videoUrl: string }) => {
       try {
         const videoDetails = await getVideoDetails(body.videoUrl);
-        const newVideo = { ...videoDetails, addedBy: user };
+        const newVideo = { ...videoDetails!, addedBy: user };
 
         if (videoDetails !== null) {
           if (currentSong === null && nextQueue.length === 0) {
             currentSong = newVideo;
-            await createHlsStream(currentSong.videoUrl, currentSong.videoId);
+            await createHlsStream(currentSong.videoUrl, currentSong.videoId!);
 
             const { filteredFiles } = await findFilesWithExtension(
               "./src/song/stream",
@@ -129,7 +129,7 @@ const configureSocketIO = (httpServer: HttpServer) => {
         if (nextQueue.length > 0) {
           currentSong = nextQueue[0];
           nextQueue.shift();
-          await createHlsStream(currentSong.videoUrl, currentSong.videoId);
+          await createHlsStream(currentSong!.videoUrl, currentSong!.videoId!);
         } else {
           currentSong = null;
         }

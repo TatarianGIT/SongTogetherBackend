@@ -24,7 +24,7 @@ export async function mergeSegments(
           console.log("Merge finished");
           resolve();
         })
-        .on("error", (err) => {
+        .on("error", (err: Error) => {
           console.error("mergeSegments (ffmpeg) Error:", err);
           reject();
         });

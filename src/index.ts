@@ -4,11 +4,11 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import passport from "passport";
 import cookieSession from "cookie-session";
-import "./config/passport.config.js";
+import "./config/passport.config";
 import morgan from "morgan";
-import MainRoute from "./routes/index.js";
+import MainRoute from "./routes/index";
 import { createServer } from "http";
-import configureSocketIO from "./socketio/socket.js";
+import configureSocketIO from "./socketio/socket";
 
 dotenv.config();
 
@@ -22,7 +22,7 @@ app.use(morgan("dev"));
 app.use(
   cookieSession({
     name: "session",
-    keys: [process.env.COOKIE_KEY],
+    keys: [process.env.COOKIE_KEY!],
     maxAge: 3 * 24 * 60 * 60 * 1000, // 3days
   })
 );

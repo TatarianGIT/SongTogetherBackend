@@ -1,8 +1,8 @@
 import { Router, Request, Response } from "express";
-import AuthRoute from "./auth.js";
-import SongRoute from "./song.js";
-import { isAuthenticated } from "../middleware/isAuthenticated.js";
 import fs from "fs";
+import AuthRoute from "./auth";
+import SongRoute from "./song";
+import { isAuthenticated } from "../middleware/isAuthenticated";
 
 const MainRoute = Router();
 

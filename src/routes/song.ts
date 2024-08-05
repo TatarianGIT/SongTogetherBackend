@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import dotenv from "dotenv";
-import { getVideoDetails } from "../utils/ytdl.js";
-import { findFilesWithExtension } from "../utils/helpers.js";
+import { findFilesWithExtension } from "../utils/helpers";
+import { getVideoDetails } from "../utils/ytdl";
 
 dotenv.config();
 
