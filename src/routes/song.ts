@@ -11,10 +11,14 @@ SongRoute.get("/get", async (req: Request, res: Response) => {
   const m3u8Path = "./src/song/stream";
   const extension = ".m3u8";
 
-  const { filteredFiles } = await findFilesWithExtension(m3u8Path, extension);
-  res
-    .status(200)
-    .send(`http://localhost:3000/src/song/stream/${filteredFiles[0]}`);
+  const filteredFiles = await findFilesWithExtension(m3u8Path, extension);
+  if (filteredFiles) {
+    res
+      .status(200)
+      .send(`http://localhost:3000/src/song/stream/${filteredFiles}`);
+  } else {
+    res.status(404).send("No files found");
+  }
 });
 
 SongRoute.post("/add", async (req: Request, res: Response) => {

@@ -16,11 +16,11 @@ export const clearDirectory = async (directory: string) => {
 export const findFilesWithExtension = async (
   dir: string,
   ext: string
-): Promise<{ filteredFiles: string[] } | null> => {
+): Promise<string | null> => {
   try {
     const files = await fs.promises.readdir(dir);
     const filteredFiles = files.filter((file) => path.extname(file) === ext);
-    return { filteredFiles };
+    return filteredFiles[0];
   } catch (err) {
     console.log("findFilesWithExtension", err);
     return null;

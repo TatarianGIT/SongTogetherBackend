@@ -77,12 +77,12 @@ const configureSocketIO = (httpServer: HttpServer) => {
             currentSong = newVideo;
             await createHlsStream(currentSong.videoUrl, currentSong.videoId!);
 
-            const { filteredFiles } = await findFilesWithExtension(
+            const filteredFiles = await findFilesWithExtension(
               "./src/song/stream",
               ".m3u8"
             );
-            if (filteredFiles !== undefined) {
-              fullFilePath = `http://localhost:3000/src/song/stream/${filteredFiles[0]}`;
+            if (filteredFiles) {
+              fullFilePath = `http://localhost:3000/src/song/stream/${filteredFiles}`;
               io.emit("updateStreamPath", fullFilePath);
             }
 
@@ -100,11 +100,11 @@ const configureSocketIO = (httpServer: HttpServer) => {
     // Send path to .m3u8 file
     socket.on("requestFile", async (filePath) => {
       try {
-        const { filteredFiles } = await findFilesWithExtension(
+        const filteredFiles = await findFilesWithExtension(
           "./src/song/stream",
           ".m3u8"
         );
-        fullFilePath = `http://localhost:3000/src/song/stream/${filteredFiles[0]}`;
+        fullFilePath = `http://localhost:3000/src/song/stream/${filteredFiles}`;
       } catch (error) {
         console.error("socket requestFile", error);
       } finally {
@@ -134,13 +134,13 @@ const configureSocketIO = (httpServer: HttpServer) => {
           currentSong = null;
         }
 
-        const { filteredFiles } = await findFilesWithExtension(
+        const filteredFiles = await findFilesWithExtension(
           "./src/song/stream",
           ".m3u8"
         );
 
-        if (filteredFiles.length > 0) {
-          fullFilePath = `http://localhost:3000/src/song/stream/${filteredFiles[0]}`;
+        if (filteredFiles) {
+          fullFilePath = `http://localhost:3000/src/song/stream/${filteredFiles}`;
         } else {
           fullFilePath = "";
         }
