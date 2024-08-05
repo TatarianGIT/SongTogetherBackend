@@ -49,9 +49,9 @@ export type SocketUser = {
 
 export type SongQueue = {
   videoUrl: string;
-  videoId: string | null;
+  videoId: string;
   title: string;
   lengthSeconds: string;
   thumbnailUrl: string;
   addedBy: SocketUser;
-};
+} | null;
