@@ -1,14 +1,12 @@
 import { NextFunction, Response, Request } from "express";
-import { User } from "../types";
 
 export const isAuthenticated = (
   req: Request,
   res: Response,
   next: NextFunction
 ) => {
-  if (req.user) {
-    return next();
+  if (!res.locals.user) {
+    return res.status(401).end();
   }
-
-  return res.status(401).json({ message: "unauthorized" });
+  next();
 };
