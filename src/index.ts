@@ -8,7 +8,8 @@ import "./config/passport.config";
 import morgan from "morgan";
 import MainRoute from "./routes/index";
 import { createServer } from "http";
-import configureSocketIO from "./socketio/socket";
+import configureSocketIO from "./socketio/socket.js";
+import MainRoute from "./routes/index.js";
 
 dotenv.config();
 

@@ -2,10 +2,10 @@ import fs from "fs";
 import ytdl, { videoInfo } from "@distube/ytdl-core";
 import ffmpeg from "fluent-ffmpeg";
 import ffmpegPath from "ffmpeg-static";
-import { clearDirectory } from "./helpers";
+import { clearDirectory } from "./helpers.js";
 import { promisify } from "util";
 import { pipeline as streamPipeline } from "stream";
-import { convertToHls, mergeSegments } from "./ffmpeg";
+import { convertToHls, mergeSegments } from "./ffmpeg.js";
 
 const pipeline = promisify(streamPipeline);
 

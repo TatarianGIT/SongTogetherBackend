@@ -1,10 +1,10 @@
 import { Server } from "socket.io";
 import { Server as HttpServer } from "http";
-import { IoUserResponse, SocketUser, SongQueue } from "../types/index";
-import { addUserToList, removeUserFromList } from "./helpers";
+import { IoUserResponse, SocketUser, SongQueue } from "../types/index.js";
+import { addUserToList, removeUserFromList } from "./helpers.js";
 import { jwtDecode } from "jwt-decode";
-import { createHlsStream, getVideoDetails } from "../utils/ytdl";
-import { clearDirectory, findFilesWithExtension } from "../utils/helpers";
+import { createHlsStream, getVideoDetails } from "../utils/ytdl.js";
+import { clearDirectory, findFilesWithExtension } from "../utils/helpers.js";
 import dotenv from "dotenv";
 
 dotenv.config();

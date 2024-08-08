@@ -1,7 +1,7 @@
-import { asc, eq, not } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import { SongQueue } from "../types";
-import { db } from "./db";
-import { VideoList } from "./schema";
+import { db } from "./db.js";
+import { VideoList } from "./schema.js";
 
 export const addNewVideo = async (newVideo: SongQueue, isCurrent?: boolean) => {
   try {
