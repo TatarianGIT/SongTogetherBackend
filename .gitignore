@@ -132,3 +132,5 @@ dist
 # Downloaded song and HLS stream files
 src/song/*
 sqlite.db
+.nvmrc
+database.db
