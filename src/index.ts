@@ -2,11 +2,8 @@ import express, { Application } from "express";
 import dotenv from "dotenv";
 import cors from "cors";
 import cookieParser from "cookie-parser";
-import passport from "passport";
 import cookieSession from "cookie-session";
-import "./config/passport.config";
 import morgan from "morgan";
-import MainRoute from "./routes/index";
 import { createServer } from "http";
 import configureSocketIO from "./socketio/socket.js";
 import MainRoute from "./routes/index.js";
@@ -27,9 +24,6 @@ app.use(
     maxAge: 3 * 24 * 60 * 60 * 1000, // 3days
   })
 );
-
-app.use(passport.initialize());
-app.use(passport.session());
 
 app.use(
   cors({
