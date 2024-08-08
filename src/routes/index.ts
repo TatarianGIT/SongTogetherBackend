@@ -1,12 +1,26 @@
 import { Router, Request, Response } from "express";
+import { AuthRoute } from "./auth/auth.js";
+import { isAuthenticated } from "../middleware/isAuthenticated.js";
+import SongRoute from "./song.js";
+import SessionRoute from "./auth/session.js";
 import fs from "fs";
-import AuthRoute from "./auth";
-import SongRoute from "./song";
-import { isAuthenticated } from "../middleware/isAuthenticated";
 
 const MainRoute = Router();
 
+// Public routes
+MainRoute.use(SessionRoute);
+
+// Handle auth operations
 MainRoute.use("/auth", AuthRoute);
+
+// Protected routes
+// Send user details
+MainRoute.get("/me", isAuthenticated, async (req, res) => {
+  console.log(res.locals.user);
+  console.log(res.locals.session);
+});
+
+// Handle song operations
 MainRoute.use("/song", isAuthenticated, SongRoute);
 
 // Serve static files
