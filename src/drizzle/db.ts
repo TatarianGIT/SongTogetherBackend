@@ -1,5 +1,21 @@
-import { BetterSQLite3Database, drizzle } from "drizzle-orm/better-sqlite3";
-import Database from "better-sqlite3";
+import sqlite from "better-sqlite3";
 
-export const sqlite = new Database("sqlite.db");
-export const db: BetterSQLite3Database = drizzle(sqlite);
+export const db = sqlite("database.db");
+
+db.exec(`CREATE TABLE IF NOT EXISTS user (
+    id TEXT NOT NULL PRIMARY KEY,
+    discord_id TEXT NOT NULL UNIQUE,
+    username TEXT NOT NULL,
+    avatar TEXT,
+    accent_color INTEGER,
+    global_name TEXT,
+    banner_color TEXT,
+    email TEXT NOT NULL UNIQUE
+)`);
+
+db.exec(`CREATE TABLE IF NOT EXISTS session (
+    id TEXT NOT NULL PRIMARY KEY,
+    expires_at INTEGER NOT NULL,
+    user_id TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES user(id)
+)`);
