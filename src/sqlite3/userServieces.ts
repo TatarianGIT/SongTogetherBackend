@@ -1,0 +1,22 @@
+import { DatabaseUser } from "../types/index.js";
+import { db } from "./db.js";
+
+export const getUserFromSession = async (sessionId: string) => {
+  const userData = db
+    .prepare(
+      "\
+        SELECT  user.discord_id, user.username, user.avatar, user.accent_color, \
+                user.global_name, user.banner_color, user.email\
+        FROM user \
+        JOIN session ON user.id = session.user_id \
+        WHERE session.id = ? \
+    "
+    )
+    .get(sessionId);
+
+  if (userData) {
+    return userData as DatabaseUser;
+  }
+
+  return null;
+};
