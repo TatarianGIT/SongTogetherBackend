@@ -8,6 +8,7 @@ import dotenv from "dotenv";
 
 import type { DatabaseUser, DiscordUser } from "../../types/index.js";
 import { isAuthenticated } from "../../middleware/isAuthenticated.js";
+import { getUserFromSession } from "../../sqlite3/userServieces.js";
 
 dotenv.config();
 
@@ -111,7 +112,6 @@ AuthRoute.get("/discord/callback", async (req, res) => {
 
 AuthRoute.post("/logout", async (req, res) => {
   if (!res.locals.session) {
-    console.log("No session");
     return res.status(401).end();
   }
   await lucia.invalidateSession(res.locals.session.id);
@@ -122,4 +122,13 @@ AuthRoute.post("/logout", async (req, res) => {
 
 // Send user details
 AuthRoute.get("/me", isAuthenticated, async (req, res) => {
+  const userSessionId = res.locals.session.id;
+  if (userSessionId) {
+    const user: DatabaseUser | null = await getUserFromSession(userSessionId);
+
+    if (user) {
+      return res.status(200).send(user);
+    }
+  }
+  return res.status(401).end();
 });
