@@ -14,11 +14,6 @@ MainRoute.use(SessionRoute);
 MainRoute.use("/auth", AuthRoute);
 
 // Protected routes
-// Send user details
-MainRoute.get("/me", isAuthenticated, async (req, res) => {
-  console.log(res.locals.user);
-  console.log(res.locals.session);
-});
 
 // Handle song operations
 MainRoute.use("/song", isAuthenticated, SongRoute);

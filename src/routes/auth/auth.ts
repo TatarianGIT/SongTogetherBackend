@@ -7,6 +7,7 @@ import { db } from "../../sqlite3/db.js";
 import dotenv from "dotenv";
 
 import type { DatabaseUser, DiscordUser } from "../../types/index.js";
+import { isAuthenticated } from "../../middleware/isAuthenticated.js";
 
 dotenv.config();
 
@@ -117,4 +118,8 @@ AuthRoute.post("/logout", async (req, res) => {
   return res
     .setHeader("Set-Cookie", lucia.createBlankSessionCookie().serialize())
     .redirect(process.env.CLIENT_URL as string);
+});
+
+// Send user details
+AuthRoute.get("/me", isAuthenticated, async (req, res) => {
 });
