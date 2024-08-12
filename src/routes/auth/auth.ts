@@ -64,7 +64,7 @@ AuthRoute.get("/discord/callback", async (req, res) => {
           "Set-Cookie",
           lucia.createSessionCookie(session.id).serialize()
         )
-        .redirect(process.env.CLIENT_URL + "/dashboard");
+        .redirect(process.env.CLIENT_URL as string);
     }
 
     const generatedUserId = generateId(15);
@@ -91,7 +91,7 @@ AuthRoute.get("/discord/callback", async (req, res) => {
         "Set-Cookie",
         lucia.createSessionCookie(session.id).serialize()
       )
-      .redirect(process.env.CLIENT_URL + "dashboard");
+      .redirect(process.env.CLIENT_URL as string);
   } catch (e) {
     if (
       e instanceof OAuth2RequestError &&
