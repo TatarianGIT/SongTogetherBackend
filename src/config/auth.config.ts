@@ -1,7 +1,7 @@
 import { Lucia } from "lucia";
 import { Discord } from "arctic";
 import dotenv from "dotenv";
-import { db } from "../drizzle/db.js";
+import { db } from "../sqlite3/db.js";
 import { BetterSqlite3Adapter } from "@lucia-auth/adapter-sqlite";
 
 import type { DatabaseUser } from "../types/index.js";

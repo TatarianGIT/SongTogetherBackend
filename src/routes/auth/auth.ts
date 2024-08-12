@@ -3,7 +3,7 @@ import express from "express";
 import { parseCookies, serializeCookie } from "oslo/cookie";
 import { generateId } from "lucia";
 import { discord, lucia } from "../../config/auth.config.js";
-import { db } from "../../drizzle/db.js";
+import { db } from "../../sqlite3/db.js";
 import dotenv from "dotenv";
 
 import type { DatabaseUser, DiscordUser } from "../../types/index.js";
@@ -53,7 +53,6 @@ AuthRoute.get("/discord/callback", async (req, res) => {
       }
     );
     const discordUser: DiscordUser = await discordUserResponse.json();
-    console.log(discordUser);
     const existingUser = db
       .prepare("SELECT * FROM user WHERE discord_id = ?")
       .get(discordUser.id) as DatabaseUser | undefined;
