@@ -19,7 +19,7 @@ MainRoute.use("/auth", AuthRoute);
 MainRoute.use("/song", isAuthenticated, SongRoute);
 
 // Serve static files
-MainRoute.use("", isAuthenticated, async (req: Request, res: Response) => {
+MainRoute.use("", async (req: Request, res: Response) => {
   try {
     const baseDirectory = "./src/song/stream";
     const filePath = "." + req.url;
