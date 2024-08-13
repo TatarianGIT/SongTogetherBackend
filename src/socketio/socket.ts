@@ -1,10 +1,10 @@
 import { Server } from "socket.io";
 import { Server as HttpServer } from "http";
-import { IoUserResponse, SocketUser, SongQueue } from "../types/index.js";
+import { DatabaseUser, SocketUser, SongQueue } from "../types/index.js";
 import { addUserToList, removeUserFromList } from "./helpers.js";
-import { jwtDecode } from "jwt-decode";
 import { createHlsStream, getVideoDetails } from "../utils/ytdl.js";
 import { clearDirectory, findFilesWithExtension } from "../utils/helpers.js";
+import { getUserFromSession } from "../sqlite3/userServieces.js";
 import dotenv from "dotenv";
 
 dotenv.config();
@@ -27,21 +27,21 @@ const configureSocketIO = (httpServer: HttpServer) => {
     },
   });
 
-  io.use((socket, next) => {
+  io.use(async (socket, next) => {
     try {
       const cookies = socket.handshake.headers.cookie;
+
       const sessionCookie = cookies!
         .split("; ")
-        .find((row) => row.startsWith("session="));
-      const sessionValue = sessionCookie ? sessionCookie.split("=")[1] : null;
+        .find((row) => row.startsWith("auth_session="));
+      const sessionId = sessionCookie ? sessionCookie.split("=")[1] : null;
 
-      const token = sessionValue;
-
-      const decodedToken = jwtDecode<IoUserResponse>(token!, { header: true });
-
-      if (decodedToken?.passport?.user !== undefined) {
-        socket.data.userData = decodedToken.passport.user;
-        return next();
+      if (sessionId) {
+        const user: DatabaseUser | null = await getUserFromSession(sessionId);
+        if (user) {
+          socket.data.userData = user;
+          return next();
+        }
       }
     } catch (error) {
       console.log("invalid token");
@@ -49,10 +49,10 @@ const configureSocketIO = (httpServer: HttpServer) => {
   });
 
   io.on("connection", async (socket) => {
-    const userData: SocketUser = socket.data.userData;
+    const userData: DatabaseUser = socket.data.userData;
 
-    const { id, avatar, banner_color, global_name } = userData;
-    const user = { id, avatar, banner_color, global_name };
+    const { discord_id, avatar, banner_color, global_name } = userData;
+    const user: SocketUser = { discord_id, avatar, banner_color, global_name };
 
     userList = await addUserToList(user, userList);
     io.emit("updateUserList", userList);
