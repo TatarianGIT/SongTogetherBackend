@@ -19,3 +19,16 @@ db.exec(`CREATE TABLE IF NOT EXISTS session (
     user_id TEXT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES user(id)
 )`);
+
+db.exec(`CREATE TABLE IF NOT EXISTS video (
+    id TEXT NOT NULL PRIMARY KEY,
+    video_url TEXT NOT NULL,
+    video_id TEXT NOT NULL,
+    title TEXT NOT NULL,
+    queue_status TEXT CHECK(queue_status IN ('prev', 'current', 'next')) NOT NULL,
+    length_seconds TEXT NOT NULL,
+    thumbnail_url TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    user_id TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES user(id)
+)`);
