@@ -1,19 +1,33 @@
 import { Server } from "socket.io";
 import { Server as HttpServer } from "http";
-import { DatabaseUser, SocketUser, SongQueue } from "../types/index.js";
+import type {
+  CurrentSong,
+  DatabaseUser,
+  NewVideo,
+  SocketUser,
+  SongQueue,
+  VideoDetails,
+} from "../types/index.js";
 import { addUserToList, removeUserFromList } from "./helpers.js";
 import { createHlsStream, getVideoDetailsFromYt } from "../utils/ytdl.js";
 import { clearDirectory, findFilesWithExtension } from "../utils/helpers.js";
 import { getUserFromSession } from "../sqlite3/userServieces.js";
 import dotenv from "dotenv";
+import {
+  addVideo,
+  getCurrentSong,
+  getNextVideo,
+  getQueue,
+  getVideoDetails,
+} from "../sqlite3/videoServieces.js";
 
 dotenv.config();
 
 let userList: SocketUser[] = [];
 
-let prevQueue: SongQueue[] = [];
-let nextQueue: SongQueue[] = [];
-let currentSong: SongQueue | null = null;
+let prevQueue: SongQueue = await getQueue({ queueType: "prev" });
+let nextQueue: SongQueue = await getQueue({ queueType: "next" });
+let currentSong: CurrentSong = await getCurrentSong();
 
 let isProcessing: boolean = false;
 let fullFilePath: string = "";
@@ -51,8 +65,14 @@ const configureSocketIO = (httpServer: HttpServer) => {
   io.on("connection", async (socket) => {
     const userData: DatabaseUser = socket.data.userData;
 
-    const { discord_id, avatar, banner_color, global_name } = userData;
-    const user: SocketUser = { discord_id, avatar, banner_color, global_name };
+    const { discord_id, avatar, banner_color, global_name, id } = userData;
+    const user: SocketUser = {
+      discord_id,
+      avatar,
+      banner_color,
+      global_name,
+      id,
+    };
 
     userList = await addUserToList(user, userList);
     io.emit("updateUserList", userList);
@@ -71,19 +91,66 @@ const configureSocketIO = (httpServer: HttpServer) => {
       try {
         const videoDetails = await getVideoDetailsFromYt(body.videoUrl);
 
-            const filteredFiles = await findFilesWithExtension(
-              "./src/song/stream",
-              ".m3u8"
-            );
-            if (filteredFiles) {
-              fullFilePath = `http://localhost:3000/src/song/stream/${filteredFiles}`;
-              io.emit("updateStreamPath", fullFilePath);
-            }
+        if (videoDetails) {
+          const newVideo: NewVideo = {
+            ...videoDetails,
+            userId: user.id,
+          };
+          const nextVideoId = await getNextVideo();
 
-            io.emit("updateCurrentSong", currentSong);
+          // when next queue is empty
+          if (!nextVideoId && !currentSong) {
+            const newVideoId = await addVideo(newVideo, { current: true });
+            console.log("newVideoId", newVideoId);
+            if (newVideoId) {
+              const addedVideo: VideoDetails = await getVideoDetails(
+                newVideoId
+              );
+              console.log("addedVideo", addedVideo);
+
+              if (addedVideo) {
+                currentSong = addedVideo;
+                console.log("currentSong", currentSong);
+
+                await createHlsStream(
+                  currentSong.videoUrl,
+                  currentSong.videoId
+                );
+
+                const filteredFiles = await findFilesWithExtension(
+                  "./src/song/stream",
+                  ".m3u8"
+                );
+
+                if (filteredFiles) {
+                  fullFilePath = `http://localhost:3000/src/song/stream/${filteredFiles}`;
+                  io.emit("updateStreamPath", fullFilePath);
+                }
+
+                io.emit("updateCurrentSong", currentSong);
+              }
+            }
           } else {
-            nextQueue = [...nextQueue, newVideo];
-            io.emit("updateNextQueue", nextQueue);
+            // when next queue is not empty
+            console.log("11");
+            const newVideoId = await addVideo(newVideo, { current: false });
+            console.log("22");
+            console.log("newVideoId", newVideoId);
+            if (newVideoId) {
+              console.log("33");
+              const addedVideo: VideoDetails = await getVideoDetails(
+                newVideoId
+              );
+              console.log("addedVideo", addedVideo);
+
+              if (addedVideo) {
+                console.log("44");
+                nextQueue?.push(addedVideo);
+                console.log("nextQueue", nextQueue);
+                io.emit("updateNextQueue", nextQueue);
+                console.log("donee");
+              }
+            }
           }
         }
       } catch (error) {
