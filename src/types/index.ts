@@ -1,12 +1,3 @@
-export type SongQueue = {
-  videoUrl: string;
-  videoId: string;
-  title: string;
-  lengthSeconds: string;
-  thumbnailUrl: string;
-  addedBy: SocketUser;
-} | null;
-
 export type DiscordUser = {
   id: string;
   username: string;
@@ -28,9 +19,61 @@ export type DatabaseUser = {
   email: string;
 };
 
+export type DatabaseVideo = {
+  id: string;
+  video_url: string;
+  video_id: string;
+  title: string;
+  queue_status: string;
+  length_seconds: string;
+  thumbnail_url: string;
+  created_at: string;
+  user_id: string;
+};
+
+export type NewVideo = {
+  userId: string;
+  videoUrl: string;
+  videoId: string;
+  title: string;
+  lengthSeconds: string;
+  thumbnailUrl: string;
+};
+
 export type SocketUser = {
+  id: string;
   discord_id: string;
   avatar: string;
   global_name: string;
   banner_color: string;
 };
+
+export type VideoDetails = {
+  videoUrl: string;
+  videoId: string;
+  title: string;
+  lengthSeconds: string;
+  thumbnailUrl: string;
+  discord_id: string;
+  avatar: string;
+  global_name: string;
+  banner_color: string;
+  createdAt: string;
+} | null;
+
+export type SongQueue =
+  | {
+      videoUrl: string;
+      videoId: string;
+      title: string;
+      lengthSeconds: string;
+      thumbnailUrl: string;
+      discord_id: string;
+      avatar: string;
+      global_name: string;
+      banner_color: string;
+      createdAt: string;
+    }[]
+  | null;
+
+export type CurrentSong = VideoDetails;
