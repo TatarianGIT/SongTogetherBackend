@@ -11,7 +11,7 @@ const pipeline = promisify(streamPipeline);
 
 ffmpeg.setFfmpegPath(ffmpegPath!);
 
-export const getVideoDetails = async (videoUrl: string) => {
+export const getVideoDetailsFromYt = async (videoUrl: string) => {
   try {
     const data: videoInfo = await ytdl.getInfo(videoUrl);
     const videoId = ytdl.getVideoID(videoUrl);

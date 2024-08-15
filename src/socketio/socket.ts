@@ -2,7 +2,7 @@ import { Server } from "socket.io";
 import { Server as HttpServer } from "http";
 import { DatabaseUser, SocketUser, SongQueue } from "../types/index.js";
 import { addUserToList, removeUserFromList } from "./helpers.js";
-import { createHlsStream, getVideoDetails } from "../utils/ytdl.js";
+import { createHlsStream, getVideoDetailsFromYt } from "../utils/ytdl.js";
 import { clearDirectory, findFilesWithExtension } from "../utils/helpers.js";
 import { getUserFromSession } from "../sqlite3/userServieces.js";
 import dotenv from "dotenv";
@@ -69,13 +69,7 @@ const configureSocketIO = (httpServer: HttpServer) => {
     // Adding new song
     socket.on("addSong", async (body: { videoUrl: string }) => {
       try {
-        const videoDetails = await getVideoDetails(body.videoUrl);
-        const newVideo = { ...videoDetails!, addedBy: user };
-
-        if (videoDetails !== null) {
-          if (currentSong === null && nextQueue.length === 0) {
-            currentSong = newVideo;
-            await createHlsStream(currentSong.videoUrl, currentSong.videoId!);
+        const videoDetails = await getVideoDetailsFromYt(body.videoUrl);
 
             const filteredFiles = await findFilesWithExtension(
               "./src/song/stream",

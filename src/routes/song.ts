@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import dotenv from "dotenv";
 import { findFilesWithExtension } from "../utils/helpers.js";
-import { getVideoDetails } from "../utils/ytdl.js";
+import { getVideoDetailsFromYt } from "../utils/ytdl.js";
 
 dotenv.config();
 
@@ -23,7 +23,7 @@ SongRoute.get("/get", async (req: Request, res: Response) => {
 
 SongRoute.post("/add", async (req: Request, res: Response) => {
   const { query } = req.body.data;
-  const songInfo = await getVideoDetails(query);
+  const songInfo = await getVideoDetailsFromYt(query);
   res.json(songInfo).status(200);
 });
 
