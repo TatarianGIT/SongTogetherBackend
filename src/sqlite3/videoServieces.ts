@@ -174,3 +174,44 @@ export const getCurrentSong = async (): Promise<CurrentSong | null> => {
     return null;
   }
 };
+
+export const changeSongStatus = async (
+  videoId: string,
+  options: { action: "nextToCurrent" | "currentToPrev" }
+): Promise<number | null> => {
+  try {
+    let statusToSet: string | undefined;
+    let statusCurrent: string | undefined;
+
+    if (options.action === "currentToPrev") {
+      statusCurrent = "current";
+      statusToSet = "prev";
+    } else if (options.action === "nextToCurrent") {
+      statusCurrent = "next";
+      statusToSet = "current";
+    } else return null;
+
+    const info = db
+      .prepare(
+        "\
+            UPDATE video \
+            SET queue_status = ? \
+            WHERE id = ? \
+            AND queue_status = ? \
+        "
+      )
+      .run(statusToSet, videoId, statusCurrent) as {
+      changes: number;
+      lastInsertRowid: number;
+    };
+
+    if (!info) {
+      return null;
+    }
+
+    return info.changes;
+  } catch (error) {
+    console.log("videoServieces, changeNextToCurrent", error);
+    return null;
+  }
+};
