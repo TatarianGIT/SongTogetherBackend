@@ -151,16 +151,26 @@ const configureSocketIO = (httpServer: HttpServer) => {
     // Send path to .m3u8 file
     socket.on("requestFile", async (filePath) => {
       try {
-        const filteredFiles = await findFilesWithExtension(
+        const currentVideoInDb = await getCurrentSong();
+        let filteredFiles = await findFilesWithExtension(
           "./src/song/stream",
           ".m3u8"
         );
+
+        if (filteredFiles === undefined && currentSong && currentVideoInDb) {
+          await createHlsStream(currentSong.videoUrl, currentSong.videoId);
+        }
+        filteredFiles = await findFilesWithExtension(
+          "./src/song/stream",
+          ".m3u8"
+        );
+        if (filteredFiles) {
         fullFilePath = `http://localhost:3000/src/song/stream/${filteredFiles}`;
+          io.emit("updateStreamPath", fullFilePath);
+          fullFilePath = "";
+        }
       } catch (error) {
         console.error("socket requestFile", error);
-      } finally {
-        io.emit("updateStreamPath", fullFilePath);
-        fullFilePath = "";
       }
     });
 
