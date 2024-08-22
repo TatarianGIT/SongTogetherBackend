@@ -10,7 +10,7 @@ db.exec(`CREATE TABLE IF NOT EXISTS user (
     accent_color INTEGER,
     global_name TEXT,
     banner_color TEXT,
-    email TEXT NOT NULL UNIQUE
+    email TEXT UNIQUE
 )`);
 
 db.exec(`CREATE TABLE IF NOT EXISTS session (
