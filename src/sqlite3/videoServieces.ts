@@ -76,8 +76,21 @@ export const getNextVideo = async (): Promise<VideoDetails | null> => {
     const nextVideo = db
       .prepare(
         "\
-            SELECT * \
-            FROM video \
+            SELECT \
+              v.id as id, \
+              v.video_url as videoUrl, \
+              v.video_id as videoId, \
+              v.title, \
+              v.length_seconds as lengthSeconds, \
+              v.thumbnail_url as thumbnailUrl, \
+              v.created_at as createdAt, \
+              v.user_id as userId, \
+              u.discord_id, \
+              u.avatar, \
+              u.global_name, \
+              u.banner_color \
+            FROM video as v \
+            LEFT JOIN user as u ON u.id = v.user_id \
             WHERE queue_status = 'next' \
             ORDER BY created_at ASC \
             LIMIT 1; \
@@ -135,6 +148,7 @@ export const getCurrentSong = async (): Promise<CurrentSong | null> => {
       .prepare(
         "\
             SELECT  \
+              v.id as id, \
               v.video_url as videoUrl, \
               v.video_id as videoId, \
               v.title, \
