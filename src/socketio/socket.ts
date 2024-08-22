@@ -58,7 +58,7 @@ const configureSocketIO = (httpServer: HttpServer) => {
         }
       }
     } catch (error) {
-      console.log("invalid token");
+      console.log("invalid session");
     }
   });
 
