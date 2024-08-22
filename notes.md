@@ -1,6 +1,7 @@
 # Backend notes
 ## TODOS:
  - change video change logic (backend knows by itself when song ends, don't need to recieve that information from frontend),
+ - getQueue function from videoServieces shouldn't return all entries, reduce to 20 (?)
 
 ## Fixes:
  - none
