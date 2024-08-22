@@ -49,6 +49,7 @@ export type SocketUser = {
 };
 
 export type VideoDetails = {
+  id: string;
   videoUrl: string;
   videoId: string;
   title: string;
