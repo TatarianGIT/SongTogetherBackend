@@ -101,16 +101,13 @@ const configureSocketIO = (httpServer: HttpServer) => {
           // when next queue is empty
           if (!nextVideoId && !currentSong) {
             const newVideoId = await addVideo(newVideo, { current: true });
-            console.log("newVideoId", newVideoId);
             if (newVideoId) {
               const addedVideo: VideoDetails = await getVideoDetails(
                 newVideoId
               );
-              console.log("addedVideo", addedVideo);
 
               if (addedVideo) {
                 currentSong = addedVideo;
-                console.log("currentSong", currentSong);
 
                 await createHlsStream(
                   currentSong.videoUrl,
@@ -132,23 +129,15 @@ const configureSocketIO = (httpServer: HttpServer) => {
             }
           } else {
             // when next queue is not empty
-            console.log("11");
             const newVideoId = await addVideo(newVideo, { current: false });
-            console.log("22");
-            console.log("newVideoId", newVideoId);
             if (newVideoId) {
-              console.log("33");
               const addedVideo: VideoDetails = await getVideoDetails(
                 newVideoId
               );
-              console.log("addedVideo", addedVideo);
 
               if (addedVideo) {
-                console.log("44");
                 nextQueue?.push(addedVideo);
-                console.log("nextQueue", nextQueue);
                 io.emit("updateNextQueue", nextQueue);
-                console.log("donee");
               }
             }
           }
