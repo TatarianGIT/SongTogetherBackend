@@ -15,6 +15,7 @@ import { getUserFromSession } from "../sqlite3/userServieces.js";
 import dotenv from "dotenv";
 import {
   addVideo,
+  changeSongStatus,
   getCurrentSong,
   getNextVideo,
   getQueue,
@@ -171,17 +172,26 @@ const configureSocketIO = (httpServer: HttpServer) => {
 
       try {
         isProcessing = true;
-
         await clearDirectory("./src/song/stream");
 
-        prevQueue = [...prevQueue, currentSong];
+        const currentSongInDb = await getCurrentSong();
 
-        if (nextQueue.length > 0) {
-          currentSong = nextQueue[0];
-          nextQueue.shift();
-          await createHlsStream(currentSong!.videoUrl, currentSong!.videoId!);
-        } else {
+        if (currentSong && currentSongInDb) {
+          prevQueue?.push(currentSong);
+          const info = await changeSongStatus(currentSongInDb.id, {
+            action: "currentToPrev",
+          });
+
           currentSong = null;
+
+          const nextVideo = await getNextVideo();
+
+          if (nextVideo && nextQueue?.length! > 0) {
+            await changeSongStatus(nextVideo.id, { action: "nextToCurrent" });
+            currentSong = nextVideo;
+            nextQueue?.shift();
+            await createHlsStream(currentSong.videoUrl, currentSong.videoId);
+          }
         }
 
         const filteredFiles = await findFilesWithExtension(
