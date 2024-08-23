@@ -165,7 +165,7 @@ const configureSocketIO = (httpServer: HttpServer) => {
           ".m3u8"
         );
         if (filteredFiles) {
-        fullFilePath = `http://localhost:3000/src/song/stream/${filteredFiles}`;
+          fullFilePath = `http://localhost:3000/src/song/stream/${filteredFiles}`;
           io.emit("updateStreamPath", fullFilePath);
           fullFilePath = "";
         }
