@@ -24,6 +24,8 @@ import {
 
 dotenv.config();
 
+let io: Server;
+
 let userList: SocketUser[] = [];
 
 let prevQueue: SongQueue = await getQueue({ queueType: "prev" });
@@ -34,7 +36,7 @@ let isProcessing: boolean = false;
 let fullFilePath: string = "";
 
 const configureSocketIO = (httpServer: HttpServer) => {
-  const io = new Server(httpServer, {
+  io = new Server(httpServer, {
     cors: {
       origin: process.env.CLIENT_URL,
       methods: ["GET", "POST"],
@@ -255,4 +257,4 @@ const configureSocketIO = (httpServer: HttpServer) => {
   });
 };
 
-export default configureSocketIO;
+export { configureSocketIO, io };
