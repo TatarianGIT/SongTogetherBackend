@@ -1,4 +1,6 @@
+import { Socket } from "socket.io";
 import { SocketUser } from "../types";
+import { io } from "./socket.js";
 
 const sortUserList = async ({
   userList,
@@ -47,4 +49,21 @@ export const removeUserFromList = async (
   }
 
   return sortUserList({ userList });
+};
+
+export const sendNotificationToUser = (
+  socket: Socket,
+  title: string,
+  description: string,
+  type: "default" | "destructive"
+) => {
+  io.to(socket.id).emit("toastNotification", title, description, type);
+};
+
+export const sendNotificationToAll = (
+  title: string,
+  description: string,
+  type: "default" | "destructive"
+) => {
+  io.emit("toastNotification", title, description, type);
 };
