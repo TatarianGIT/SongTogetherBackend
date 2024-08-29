@@ -35,6 +35,9 @@ let currentSong: CurrentSong = await getCurrentSong();
 let isProcessing: boolean = false;
 let fullFilePath: string = "";
 
+let isQueueRunning: boolean = false;
+let currentTimestamp = 0;
+
 const configureSocketIO = (httpServer: HttpServer) => {
   io = new Server(httpServer, {
     cors: {
@@ -254,6 +257,104 @@ const configureSocketIO = (httpServer: HttpServer) => {
         console.error("socket getNextQueue", error);
       }
     });
+  });
+};
+
+const mainFunction = async () => {
+  if (isQueueRunning) {
+    return;
+  }
+
+  await startQueue();
+  isQueueRunning = false;
+};
+
+const startQueue = async () => {
+  isQueueRunning = true;
+
+  if (userList.length === 0) {
+    console.log("No users!");
+    return;
+  }
+
+  await clearDirectory("./src/song/stream");
+  fullFilePath = "";
+
+  const currentSongInDb = await getCurrentSong();
+
+  if (!currentSongInDb || !currentSong) {
+    console.log("No current song");
+    return;
+  }
+
+  io.emit("updateDownloadingState", true);
+  await createHlsStream(currentSong.videoUrl, currentSong.videoId);
+  io.emit("updateDownloadingState", false);
+
+  const filteredFiles = await findFilesWithExtension(
+    "./src/song/stream",
+    ".m3u8"
+  );
+
+  if (filteredFiles) {
+    fullFilePath = `http://localhost:3000/src/song/stream/${filteredFiles}`;
+    io.emit("updateStreamPath", fullFilePath);
+  }
+
+  await songInterval(parseInt(currentSongInDb.lengthSeconds));
+
+  await clearDirectory("./src/song/stream");
+
+  await handleNextSong(currentSongInDb.id);
+
+  return startQueue();
+};
+
+const handleNextSong = async (currentSongId: string) => {
+  try {
+    await changeSongStatus(currentSongId, { action: "currentToPrev" });
+
+    prevQueue?.unshift(currentSong!);
+    io.emit("updatePrevQueue", prevQueue);
+
+    const nextSong = await getNextVideo();
+    if (!nextSong || nextQueue?.length === 0 || nextQueue === null) {
+      currentSong = null;
+      io.emit("updateCurrentSong", currentSong);
+
+      return;
+    }
+
+    await changeSongStatus(nextSong.id, { action: "nextToCurrent" });
+    nextQueue?.shift();
+    io.emit("updateNextQueue", nextQueue);
+
+    currentSong = nextSong;
+    io.emit("updateCurrentSong", currentSong);
+
+    return;
+  } catch (error: any) {
+    console.log("Error handleNextSong:", error);
+  }
+};
+
+const songInterval = async (length: number) => {
+  return new Promise<void>((resolve, reject) => {
+    try {
+      currentTimestamp = 0;
+      const intervalId = setInterval(() => {
+        currentTimestamp += 1;
+        if (currentTimestamp === length) {
+          clearInterval(intervalId);
+          currentTimestamp = 0;
+          return resolve();
+        }
+      }, 1000);
+    } catch (error: any) {
+      currentTimestamp = 0;
+      console.log("songInterval", error);
+      return reject();
+    }
   });
 };
 
