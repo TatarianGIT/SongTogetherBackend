@@ -83,6 +83,8 @@ const configureSocketIO = (httpServer: HttpServer) => {
     userList = await addUserToList(user, userList);
     io.emit("updateUserList", userList);
 
+    mainFunction();
+
     socket.on("getUserList", async () => {
       io.emit("updateUserList", userList);
     });
@@ -95,7 +97,7 @@ const configureSocketIO = (httpServer: HttpServer) => {
     // Adding new song
     socket.on("addSong", async (body: { videoUrl: string }) => {
       try {
-        const videoDetails = await getVideoDetailsFromYt(body.videoUrl);
+        const videoDetails = await getVideoDetailsFromYt(body.videoUrl, socket);
 
         if (videoDetails) {
           const newVideo: NewVideo = {
@@ -111,27 +113,8 @@ const configureSocketIO = (httpServer: HttpServer) => {
               const addedVideo: VideoDetails = await getVideoDetails(
                 newVideoId
               );
-
-              if (addedVideo) {
-                currentSong = addedVideo;
-
-                await createHlsStream(
-                  currentSong.videoUrl,
-                  currentSong.videoId
-                );
-
-                const filteredFiles = await findFilesWithExtension(
-                  "./src/song/stream",
-                  ".m3u8"
-                );
-
-                if (filteredFiles) {
-                  fullFilePath = `http://localhost:3000/src/song/stream/${filteredFiles}`;
-                  io.emit("updateStreamPath", fullFilePath);
-                }
-
-                io.emit("updateCurrentSong", currentSong);
-              }
+              currentSong = addedVideo;
+              io.emit("updateCurrentSong", currentSong);
             }
           } else {
             // when next queue is not empty
@@ -147,6 +130,7 @@ const configureSocketIO = (httpServer: HttpServer) => {
               }
             }
           }
+          await mainFunction();
         }
       } catch (error) {
         console.error("socket addSong", error);
@@ -156,78 +140,10 @@ const configureSocketIO = (httpServer: HttpServer) => {
     // Send path to .m3u8 file
     socket.on("requestFile", async (filePath) => {
       try {
-        const currentVideoInDb = await getCurrentSong();
-        let filteredFiles = await findFilesWithExtension(
-          "./src/song/stream",
-          ".m3u8"
-        );
-
-        if (filteredFiles === undefined && currentSong && currentVideoInDb) {
-          await createHlsStream(currentSong.videoUrl, currentSong.videoId);
-        }
-        filteredFiles = await findFilesWithExtension(
-          "./src/song/stream",
-          ".m3u8"
-        );
-        if (filteredFiles) {
-          fullFilePath = `http://localhost:3000/src/song/stream/${filteredFiles}`;
-          io.emit("updateStreamPath", fullFilePath);
-          fullFilePath = "";
-        }
+        if (fullFilePath) io.emit("updateStreamPath", fullFilePath);
+        return;
       } catch (error) {
         console.error("socket requestFile", error);
-      }
-    });
-
-    // nextsong
-    socket.on("videoEnd", async (currentVideoId: string) => {
-      if (isProcessing) {
-        return;
-      }
-
-      try {
-        isProcessing = true;
-        await clearDirectory("./src/song/stream");
-
-        const currentSongInDb = await getCurrentSong();
-
-        if (currentSong && currentSongInDb) {
-          prevQueue?.push(currentSong);
-          const info = await changeSongStatus(currentSongInDb.id, {
-            action: "currentToPrev",
-          });
-
-          currentSong = null;
-
-          const nextVideo = await getNextVideo();
-
-          if (nextVideo && nextQueue?.length! > 0) {
-            await changeSongStatus(nextVideo.id, { action: "nextToCurrent" });
-            currentSong = nextVideo;
-            nextQueue?.shift();
-            await createHlsStream(currentSong.videoUrl, currentSong.videoId);
-          }
-        }
-
-        const filteredFiles = await findFilesWithExtension(
-          "./src/song/stream",
-          ".m3u8"
-        );
-
-        if (filteredFiles) {
-          fullFilePath = `http://localhost:3000/src/song/stream/${filteredFiles}`;
-        } else {
-          fullFilePath = "";
-        }
-      } catch (error) {
-        console.log("socket videoEnd", error);
-      } finally {
-        io.emit("updateNextQueue", nextQueue);
-        io.emit("updateStreamPath", fullFilePath);
-        io.emit("updateCurrentSong", currentSong);
-        io.emit("updatePrevQueue", prevQueue);
-        fullFilePath = "";
-        isProcessing = false;
       }
     });
 
