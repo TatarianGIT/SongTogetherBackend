@@ -5,7 +5,7 @@ import cookieParser from "cookie-parser";
 import cookieSession from "cookie-session";
 import morgan from "morgan";
 import { createServer } from "http";
-import configureSocketIO from "./socketio/socket.js";
+import { configureSocketIO } from "./socketio/socket.js";
 import MainRoute from "./routes/index.js";
 
 dotenv.config();
