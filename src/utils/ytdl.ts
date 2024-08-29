@@ -6,12 +6,20 @@ import { clearDirectory } from "./helpers.js";
 import { promisify } from "util";
 import { pipeline as streamPipeline } from "stream";
 import { convertToHls, mergeSegments } from "./ffmpeg.js";
+import {
+  sendNotificationToAll,
+  sendNotificationToUser,
+} from "../socketio/helpers.js";
+import { Socket } from "socket.io";
 
 const pipeline = promisify(streamPipeline);
 
 ffmpeg.setFfmpegPath(ffmpegPath!);
 
-export const getVideoDetailsFromYt = async (videoUrl: string) => {
+export const getVideoDetailsFromYt = async (
+  videoUrl: string,
+  socket: Socket
+) => {
   try {
     const data: videoInfo = await ytdl.getInfo(videoUrl);
     const videoId = ytdl.getVideoID(videoUrl);
@@ -30,6 +38,12 @@ export const getVideoDetailsFromYt = async (videoUrl: string) => {
     return videoDetails;
   } catch (error) {
     console.error("getVideoDetails:", error);
+    sendNotificationToUser(
+      socket,
+      "An error occurred!",
+      "Couldn't get video details!",
+      "destructive"
+    );
     return null;
   }
 };
@@ -58,6 +72,11 @@ export const createHlsStream = async (url: string, videoId: string) => {
     await convertToHls(outputFilePath, videoId);
   } catch (error) {
     console.error("createHlsStream", error);
+    sendNotificationToAll(
+      "An error occurred!",
+      "Couldn't create HLS stream!",
+      "destructive"
+    );
   } finally {
     isProcessing = false;
   }
