@@ -16,6 +16,9 @@ const pipeline = promisify(streamPipeline);
 
 ffmpeg.setFfmpegPath(ffmpegPath!);
 
+export const maxVideoDuration = 1800; // 30 mins
+export const bannedWords = ["blacha", "2115", "chivas"];
+
 export const getVideoDetailsFromYt = async (
   videoUrl: string,
   socket: Socket
