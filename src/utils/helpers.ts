@@ -1,5 +1,7 @@
 import path from "path";
 import fs from "fs";
+import { Socket } from "socket.io";
+import { sendNotificationToUser } from "../socketio/helpers.js";
 import { bannedWords, maxVideoDuration } from "./ytdl.js";
 
 export const clearDirectory = async (directory: string) => {
@@ -55,3 +57,50 @@ export const isVideoTooLong = (
   return videoLength > maxVideoLength;
 };
 
+type getVideoDetails = {
+  videoUrl: string;
+  videoId: string;
+  title: string;
+  lengthSeconds: string;
+  thumbnailUrl: string;
+  isLive: boolean | undefined;
+};
+
+export const isVideoSupported = (
+  videoDetails: getVideoDetails,
+  socket: Socket
+): boolean => {
+  if (videoDetails.isLive) {
+    sendNotificationToUser(
+      socket,
+      "You can't add live steams!",
+      "Live broadcasts are not supported!",
+      "destructive"
+    );
+    return false;
+  }
+
+  if (isVideoTooLong(videoDetails.lengthSeconds, maxVideoDuration)) {
+    sendNotificationToUser(
+      socket,
+      "An error occurred!",
+      "Video is too long, maximum allowed length is 20 minutes!",
+      "destructive"
+    );
+    return false;
+  }
+
+  const returnedWord = isBannedWordInTitle(videoDetails.title, bannedWords);
+
+  if (returnedWord) {
+    sendNotificationToUser(
+      socket,
+      "You can't add this video!",
+      `Video contains banned words: ${returnedWord}.`,
+      "destructive"
+    );
+    return false;
+  }
+
+  return true;
+};
