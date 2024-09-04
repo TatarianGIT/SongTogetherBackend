@@ -10,7 +10,11 @@ import type {
 } from "../types/index.js";
 import { addUserToList, removeUserFromList } from "./helpers.js";
 import { createHlsStream, getVideoDetailsFromYt } from "../utils/ytdl.js";
-import { clearDirectory, findFilesWithExtension } from "../utils/helpers.js";
+import {
+  clearDirectory,
+  findFilesWithExtension,
+  isVideoSupported,
+} from "../utils/helpers.js";
 import { getUserFromSession } from "../sqlite3/userServieces.js";
 import dotenv from "dotenv";
 import {
@@ -98,40 +102,37 @@ const configureSocketIO = (httpServer: HttpServer) => {
     socket.on("addSong", async (body: { videoUrl: string }) => {
       try {
         const videoDetails = await getVideoDetailsFromYt(body.videoUrl, socket);
+        if (!videoDetails) return;
 
-        if (videoDetails) {
-          const newVideo: NewVideo = {
-            ...videoDetails,
-            userId: user.id,
-          };
-          const nextVideoId = await getNextVideo();
+        if (!isVideoSupported(videoDetails, socket)) return;
 
-          // when next queue is empty
-          if (!nextVideoId && !currentSong) {
-            const newVideoId = await addVideo(newVideo, { current: true });
-            if (newVideoId) {
-              const addedVideo: VideoDetails = await getVideoDetails(
-                newVideoId
-              );
-              currentSong = addedVideo;
-              io.emit("updateCurrentSong", currentSong);
-            }
-          } else {
-            // when next queue is not empty
-            const newVideoId = await addVideo(newVideo, { current: false });
-            if (newVideoId) {
-              const addedVideo: VideoDetails = await getVideoDetails(
-                newVideoId
-              );
+        const newVideo: NewVideo = {
+          ...videoDetails,
+          userId: user.id,
+        };
+        const nextVideoId = await getNextVideo();
 
-              if (addedVideo) {
-                nextQueue?.push(addedVideo);
-                io.emit("updateNextQueue", nextQueue);
-              }
+        // when next queue is empty
+        if (!nextVideoId && !currentSong) {
+          const newVideoId = await addVideo(newVideo, { current: true });
+          if (newVideoId) {
+            const addedVideo: VideoDetails = await getVideoDetails(newVideoId);
+            currentSong = addedVideo;
+            io.emit("updateCurrentSong", currentSong);
+          }
+        } else {
+          // when next queue is not empty
+          const newVideoId = await addVideo(newVideo, { current: false });
+          if (newVideoId) {
+            const addedVideo: VideoDetails = await getVideoDetails(newVideoId);
+
+            if (addedVideo) {
+              nextQueue?.push(addedVideo);
+              io.emit("updateNextQueue", nextQueue);
             }
           }
-          await mainFunction();
         }
+        await mainFunction();
       } catch (error) {
         console.error("socket addSong", error);
       }
