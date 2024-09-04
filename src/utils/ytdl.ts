@@ -27,6 +27,7 @@ export const getVideoDetailsFromYt = async (
     const data: videoInfo = await ytdl.getInfo(videoUrl);
     const videoId = ytdl.getVideoID(videoUrl);
 
+    const isLive = data.videoDetails.liveBroadcastDetails?.isLiveNow;
     const thumbnailUrl = data.videoDetails.thumbnails[3].url;
     const { lengthSeconds, title } = data.videoDetails;
 
@@ -36,6 +37,7 @@ export const getVideoDetailsFromYt = async (
       title,
       lengthSeconds,
       thumbnailUrl,
+      isLive,
     };
 
     return videoDetails;
