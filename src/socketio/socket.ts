@@ -11,7 +11,7 @@ import type {
 import { addUserToList, removeUserFromList } from "./helpers.js";
 import { createHlsStream, getVideoDetailsFromYt } from "../utils/ytdl.js";
 import {
-  clearDirectory,
+  deleteDirectoryWithContent,
   findFilesWithExtension,
   isVideoSupported,
 } from "../utils/helpers.js";
