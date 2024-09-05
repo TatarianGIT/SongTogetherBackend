@@ -1,8 +1,7 @@
-import fs from "fs";
+import fs, { promises } from "fs";
 import ytdl, { videoInfo } from "@distube/ytdl-core";
 import ffmpeg from "fluent-ffmpeg";
 import ffmpegPath from "ffmpeg-static";
-import { clearDirectory } from "./helpers.js";
 import { promisify } from "util";
 import { pipeline as streamPipeline } from "stream";
 import { convertToHls, mergeSegments } from "./ffmpeg.js";
@@ -65,23 +64,27 @@ export const createHlsStream = async (url: string, videoId: string) => {
 
   try {
     console.log(`Creation of HLS stream for ${videoId} started.`);
-    await clearDirectory("./src/song/stream");
-    const outputFilePath = `./src/song/${videoId}.mp4`;
-    const videoSegmentPath = "./src/song/video.mp4";
-    const audioSegmentPath = "./src/song/audio.mp4";
+    await promises.mkdir(`./src/song/${videoId}`);
+    const outputFilePath = `./src/song/${videoId}/${videoId}.mp4`;
+    const videoSegmentPath = `./src/song/${videoId}/video.mp4`;
+    const audioSegmentPath = `./src/song/${videoId}/audio.mp4`;
 
     console.log("Downloading segments...");
     await downloadSegments(url, videoSegmentPath, audioSegmentPath);
     console.log("Merging segments...");
     await mergeSegments(videoSegmentPath, audioSegmentPath, outputFilePath);
     await convertToHls(outputFilePath, videoId);
-  } catch (error) {
-    console.error("createHlsStream", error);
-    sendNotificationToAll(
-      "An error occurred!",
-      "Couldn't create HLS stream!",
-      "destructive"
-    );
+  } catch (error: any) {
+    if (error.code === "EEXIST") {
+      console.log("Directory already exists: ", videoId);
+    } else {
+      console.error("createHlsStream", error);
+      sendNotificationToAll(
+        "An error occurred!",
+        "Couldn't create HLS stream!",
+        "destructive"
+      );
+    }
   } finally {
     isProcessing = false;
   }

@@ -50,7 +50,7 @@ export const convertToHls = async (videoPath: string, videoId?: string) => {
         "-hls_list_size 0",
         "-f hls",
       ])
-      .output(`./src/song/stream/${videoId}.m3u8`)
+      .output(`./src/song/${videoId}/${videoId}.m3u8`)
       .on("end", async () => {
         await fs.unlink(videoPath);
         console.log("Conversion to HLS finished");
