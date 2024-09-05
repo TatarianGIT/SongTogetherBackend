@@ -28,7 +28,6 @@ MainRoute.use("", async (req: Request, res: Response) => {
       return res
         .status(400)
         .json({ message: "Access to this directory is forbidden" });
-    } else {
     }
 
     fs.readFile(filePath, (error, content) => {
