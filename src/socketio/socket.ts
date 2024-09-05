@@ -14,6 +14,7 @@ import {
   deleteDirectoryWithContent,
   findFilesWithExtension,
   isVideoSupported,
+  listDirectories,
 } from "../utils/helpers.js";
 import { getUserFromSession } from "../sqlite3/userServieces.js";
 import dotenv from "dotenv";
@@ -41,6 +42,8 @@ let fullFilePath: string = "";
 
 let isQueueRunning: boolean = false;
 let currentTimestamp = 0;
+
+let nextSongHlsPromise: Promise<void> | null = null;
 
 const configureSocketIO = (httpServer: HttpServer) => {
   io = new Server(httpServer, {
@@ -130,6 +133,23 @@ const configureSocketIO = (httpServer: HttpServer) => {
               nextQueue?.push(addedVideo);
               io.emit("updateNextQueue", nextQueue);
             }
+
+            if (nextQueue?.length === 1) {
+              let directories = await listDirectories("./src/song");
+              let filteredFiles = await findFilesWithExtension(
+                `./src/song/${nextQueue[0].videoId}`,
+                ".m3u8"
+              );
+              if (
+                !directories?.includes(nextQueue[0].videoId) &&
+                !filteredFiles
+              ) {
+                nextSongHlsPromise = createHlsStream(
+                  nextQueue[0].videoUrl,
+                  nextQueue[0].videoId
+                );
+              } else nextSongHlsPromise = null;
+            }
           }
         }
         await mainFunction();
@@ -191,7 +211,7 @@ const mainFunction = async () => {
   isQueueRunning = false;
 };
 
-const startQueue = async () => {
+const startQueue = async (): Promise<void> => {
   isQueueRunning = true;
 
   if (userList.length === 0) {
@@ -223,14 +243,42 @@ const startQueue = async () => {
 
   updateStaticPath(currentSong.videoId);
 
-  const filteredFiles = await findFilesWithExtension(
-    "./src/song/stream",
+  if (nextSongHlsPromise) {
+    console.log("Waiting for next song HLS stream creation to complete...");
+    await nextSongHlsPromise;
+  }
+
+  // get all directories and current song's .m3u8 file
+  let directories = await listDirectories("./src/song");
+  let filteredFiles = await findFilesWithExtension(
+    `./src/song/${currentSong.videoId}`,
+    ".m3u8"
+  );
+
+  // create stream of current song if stream doesn't exist
+  if (!directories?.includes(currentSong.videoId) && !filteredFiles) {
+    io.emit("updateDownloadingState", true);
+    await createHlsStream(currentSong.videoUrl, currentSong.videoId);
+    io.emit("updateDownloadingState", false);
+  }
+
+  filteredFiles = await findFilesWithExtension(
+    `./src/song/${currentSong.videoId}`,
     ".m3u8"
   );
 
   if (filteredFiles) {
-    fullFilePath = `http://localhost:3000/src/song/stream/${filteredFiles}`;
+    fullFilePath = `http://localhost:3000/src/song/${currentSong.videoId}/${currentSong.videoId}.m3u8`;
     io.emit("updateStreamPath", fullFilePath);
+  }
+
+  if (nextSong && nextQueue && nextQueue.length > 0) {
+    nextSongHlsPromise = createHlsStream(
+      nextQueue[0].videoUrl,
+      nextQueue[0].videoId
+    );
+  } else {
+    nextSongHlsPromise = null;
   }
 
   await songInterval(parseInt(currentSongInDb.lengthSeconds));
