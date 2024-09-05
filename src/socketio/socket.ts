@@ -201,9 +201,22 @@ const startQueue = async () => {
   fullFilePath = "";
 
   const currentSongInDb = await getCurrentSong();
+  const nextSong = await getNextVideo();
 
   if (!currentSongInDb || !currentSong) {
     console.log("No current song");
+
+    if (nextSong && nextQueue && nextQueue.length > 0) {
+      await changeSongStatus(nextSong.id, { action: "nextToCurrent" });
+      nextQueue?.shift();
+      io.emit("updateNextQueue", nextQueue);
+
+      currentSong = nextSong;
+      io.emit("updateCurrentSong", currentSong);
+
+      return startQueue();
+    }
+
     return;
   }
 
