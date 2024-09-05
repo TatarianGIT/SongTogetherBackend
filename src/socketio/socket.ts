@@ -224,9 +224,11 @@ const startQueue = async (): Promise<void> => {
   const currentSongInDb = await getCurrentSong();
   const nextSong = await getNextVideo();
 
+  // exit if no current song
   if (!currentSongInDb || !currentSong) {
     console.log("No current song");
 
+    // if no current song but next song exists
     if (nextSong && nextQueue && nextQueue.length > 0) {
       await changeSongStatus(nextSong.id, { action: "nextToCurrent" });
       nextQueue?.shift();
@@ -241,8 +243,10 @@ const startQueue = async (): Promise<void> => {
     return;
   }
 
+  // update static path to current songs's id
   updateStaticPath(currentSong.videoId);
 
+  // wait if hls creation of next video is pending
   if (nextSongHlsPromise) {
     console.log("Waiting for next song HLS stream creation to complete...");
     await nextSongHlsPromise;
@@ -262,16 +266,19 @@ const startQueue = async (): Promise<void> => {
     io.emit("updateDownloadingState", false);
   }
 
+  // get .m3u8 file
   filteredFiles = await findFilesWithExtension(
     `./src/song/${currentSong.videoId}`,
     ".m3u8"
   );
 
+  // check if .m3u8 file exists
   if (filteredFiles) {
     fullFilePath = `http://localhost:3000/src/song/${currentSong.videoId}/${currentSong.videoId}.m3u8`;
     io.emit("updateStreamPath", fullFilePath);
   }
 
+  // if there is next song, create hls stream
   if (nextSong && nextQueue && nextQueue.length > 0) {
     nextSongHlsPromise = createHlsStream(
       nextQueue[0].videoUrl,
@@ -281,17 +288,24 @@ const startQueue = async (): Promise<void> => {
     nextSongHlsPromise = null;
   }
 
+  // wait for video end
   await songInterval(parseInt(currentSongInDb.lengthSeconds));
 
+  // remove directory of a video and its stream files if next video isn't duplicate
   if (!nextQueue || currentSong.videoId !== nextQueue[0]?.videoId) {
     await deleteDirectoryWithContent({
       directoryPath: `./src/song/${currentSong.videoId}`,
       deleteDirectory: true,
     });
   }
+
+  // next song
   await handleNextSong(currentSongInDb.id);
 
+  // set current song's path to undefined
   updateStaticPath(undefined);
+
+  // run recursively
   return startQueue();
 };
 
