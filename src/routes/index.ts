@@ -19,10 +19,21 @@ MainRoute.use("/auth", AuthRoute);
 MainRoute.use("/song", isAuthenticated, SongRoute);
 
 // Serve static files
+
+export let currentSongStaticPath: string | undefined;
+
+export const updateStaticPath = (currentSongId: string | undefined) => {
+  currentSongStaticPath = currentSongId;
+};
+
 MainRoute.use("", async (req: Request, res: Response) => {
   try {
-    const baseDirectory = "./src/song/stream";
+    const baseDirectory = `./src/song/${currentSongStaticPath}`;
     const filePath = "." + req.url;
+
+    if (!currentSongStaticPath) {
+      return res.status(400).json({ message: "No song available" });
+    }
 
     if (!filePath.startsWith(baseDirectory)) {
       return res
