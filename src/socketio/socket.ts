@@ -25,6 +25,7 @@ import {
   getQueue,
   getVideoDetails,
 } from "../sqlite3/videoServieces.js";
+import { updateStaticPath } from "../routes/index.js";
 
 dotenv.config();
 
@@ -220,9 +221,7 @@ const startQueue = async () => {
     return;
   }
 
-  io.emit("updateDownloadingState", true);
-  await createHlsStream(currentSong.videoUrl, currentSong.videoId);
-  io.emit("updateDownloadingState", false);
+  updateStaticPath(currentSong.videoId);
 
   const filteredFiles = await findFilesWithExtension(
     "./src/song/stream",
@@ -240,6 +239,7 @@ const startQueue = async () => {
 
   await handleNextSong(currentSongInDb.id);
 
+  updateStaticPath(undefined);
   return startQueue();
 };
 
