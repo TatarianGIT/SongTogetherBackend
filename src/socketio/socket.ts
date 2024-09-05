@@ -181,6 +181,11 @@ const mainFunction = async () => {
     return;
   }
 
+  await deleteDirectoryWithContent({
+    directoryPath: "./src/song",
+    deleteDirectory: false,
+  });
+
   await startQueue();
   isQueueRunning = false;
 };
@@ -193,7 +198,6 @@ const startQueue = async () => {
     return;
   }
 
-  await clearDirectory("./src/song/stream");
   fullFilePath = "";
 
   const currentSongInDb = await getCurrentSong();
