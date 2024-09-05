@@ -283,8 +283,12 @@ const startQueue = async (): Promise<void> => {
 
   await songInterval(parseInt(currentSongInDb.lengthSeconds));
 
-  await clearDirectory("./src/song/stream");
-
+  if (!nextQueue || currentSong.videoId !== nextQueue[0]?.videoId) {
+    await deleteDirectoryWithContent({
+      directoryPath: `./src/song/${currentSong.videoId}`,
+      deleteDirectory: true,
+    });
+  }
   await handleNextSong(currentSongInDb.id);
 
   updateStaticPath(undefined);
