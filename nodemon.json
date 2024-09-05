@@ -1,6 +1,6 @@
 {
     "watch": ["src"],
-    "ignore": ["src/song/stream/"],
+    "ignore": ["src/song/"],
     "ext": "ts",
     "execMap": {
         "ts": "node --loader ts-node/esm"
