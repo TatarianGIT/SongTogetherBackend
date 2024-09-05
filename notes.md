@@ -1,6 +1,6 @@
 # Backend notes
 ## TODOS:
- - getQueue function from videoServieces shouldn't return all entries, reduce to 20 (?)
+ - none
 
 ## Fixes:
  - none
