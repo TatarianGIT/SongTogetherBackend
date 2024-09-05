@@ -45,11 +45,25 @@ export async function deleteDirectoryWithContent({
 export const findFilesWithExtension = async (
   dir: string,
   ext: string
-): Promise<string | null> => {
+): Promise<string[] | null> => {
   try {
+    await fs.promises.access(dir, fs.constants.F_OK);
+
     const files = await fs.promises.readdir(dir);
+
     const filteredFiles = files.filter((file) => path.extname(file) === ext);
-    return filteredFiles[0];
+
+    return filteredFiles;
+  } catch (err: any) {
+    if (err.code === "ENOENT") {
+      console.log(`Directory does not exist: ${dir}`);
+    } else {
+      console.log("findFilesWithExtension error:", err);
+    }
+    return null;
+  }
+};
+
   } catch (err) {
     console.log("findFilesWithExtension", err);
     return null;
