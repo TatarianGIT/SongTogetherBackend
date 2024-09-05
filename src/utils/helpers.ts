@@ -4,17 +4,43 @@ import { Socket } from "socket.io";
 import { sendNotificationToUser } from "../socketio/helpers.js";
 import { bannedWords, maxVideoDuration } from "./ytdl.js";
 
-export const clearDirectory = async (directory: string) => {
+export async function deleteDirectoryWithContent({
+  directoryPath,
+  deleteDirectory,
+}: {
+  directoryPath: string;
+  deleteDirectory: boolean;
+}): Promise<void> {
   try {
-    const files = await fs.promises.readdir(directory);
-    const unlinkPromises = files.map((file) =>
-      fs.promises.unlink(path.join(directory, file))
-    );
-    await Promise.all(unlinkPromises);
-  } catch (error) {
-    console.error("clearDirectory", error);
+    await fs.promises.access(directoryPath);
+
+    const files = await fs.promises.readdir(directoryPath);
+
+    for (const file of files) {
+      const currentPath = path.join(directoryPath, file);
+      const stats = await fs.promises.lstat(currentPath);
+
+      if (stats.isDirectory()) {
+        await deleteDirectoryWithContent({
+          directoryPath: currentPath,
+          deleteDirectory: true,
+        });
+      } else {
+        await fs.promises.unlink(currentPath);
+      }
+    }
+
+    if (deleteDirectory === true) {
+      await fs.promises.rmdir(directoryPath);
+    }
+  } catch (err: any) {
+    if (err.code === "ENOENT") {
+      console.log(`Directory not found: ${directoryPath}`);
+    } else {
+      throw err;
+    }
   }
-};
+}
 
 export const findFilesWithExtension = async (
   dir: string,
