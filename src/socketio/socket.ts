@@ -32,7 +32,7 @@ let io: Server;
 
 let userList: SocketUser[] = [];
 
-let prevQueue: SongQueue = await getQueue({ queueType: "prev" });
+let prevQueue: SongQueue = await getQueue({ queueType: "prev", limit: 20 });
 let nextQueue: SongQueue = await getQueue({ queueType: "next" });
 let currentSong: CurrentSong = await getCurrentSong();
 
