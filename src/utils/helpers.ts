@@ -64,8 +64,14 @@ export const findFilesWithExtension = async (
   }
 };
 
+export const listDirectories = async (
+  dir: string
+): Promise<string[] | null> => {
+  try {
+    const directories = await fs.promises.readdir(dir);
+    return directories;
   } catch (err) {
-    console.log("findFilesWithExtension", err);
+    console.log("listDirectories", err);
     return null;
   }
 };
