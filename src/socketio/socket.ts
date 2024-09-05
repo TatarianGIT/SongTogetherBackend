@@ -36,7 +36,6 @@ let prevQueue: SongQueue = await getQueue({ queueType: "prev", limit: 20 });
 let nextQueue: SongQueue = await getQueue({ queueType: "next" });
 let currentSong: CurrentSong = await getCurrentSong();
 
-let isProcessing: boolean = false;
 let fullFilePath: string = "";
 
 let isQueueRunning: boolean = false;
