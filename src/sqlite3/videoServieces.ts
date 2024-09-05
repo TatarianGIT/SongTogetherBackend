@@ -108,32 +108,38 @@ export const getNextVideo = async (): Promise<VideoDetails | null> => {
 
 export const getQueue = async ({
   queueType,
+  limit,
 }: {
   queueType: "prev" | "next";
+  limit?: number;
 }): Promise<SongQueue | null> => {
   try {
-    const songQueue = db
-      .prepare(
-        "\
-            SELECT  \
-              v.video_url as videoUrl, \
-              v.video_id as videoId, \
-              v.title, \
-              v.length_seconds as lengthSeconds, \
-              v.thumbnail_url as thumbnailUrl, \
-              v.created_at as createdAt, \
-              u.discord_id, \
-              u.avatar, \
-              u.global_name, \
-              u.banner_color \
-            FROM video as v \
-            LEFT JOIN user as u ON u.id = v.user_id \
-            WHERE v.queue_status = ? \
-            "
-      )
-      .all(queueType) as SongQueue;
+    let query = `
+      SELECT  
+        v.video_url as videoUrl, 
+        v.video_id as videoId, 
+        v.title, 
+        v.length_seconds as lengthSeconds, 
+        v.thumbnail_url as thumbnailUrl, 
+        v.created_at as createdAt, 
+        u.discord_id, 
+        u.avatar, 
+        u.global_name, 
+        u.banner_color 
+      FROM video as v 
+      LEFT JOIN user as u ON u.id = v.user_id 
+      WHERE v.queue_status = ?`;
 
-    if (!songQueue) return null;
+    const params: (string | number)[] = [queueType];
+
+    if (limit) {
+      query += " LIMIT ?";
+      params.push(limit);
+    }
+
+    const songQueue = db.prepare(query).all(...params) as SongQueue;
+
+    if (!songQueue || songQueue.length === 0) return null;
 
     return songQueue;
   } catch (error: any) {
