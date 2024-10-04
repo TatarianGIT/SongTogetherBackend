@@ -152,7 +152,9 @@ const configureSocketIO = (httpServer: HttpServer) => {
                   nextQueue[0].videoUrl,
                   nextQueue[0].videoId
                 );
-              } else nextSongHlsPromise = null;
+              } else {
+                nextSongHlsPromise = null;
+              }
             }
           }
         }
