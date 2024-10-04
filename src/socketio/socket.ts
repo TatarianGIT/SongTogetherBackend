@@ -130,7 +130,11 @@ const configureSocketIO = (httpServer: HttpServer) => {
             const addedVideo: VideoDetails = await getVideoDetails(newVideoId);
 
             if (addedVideo) {
-              nextQueue?.push(addedVideo);
+              if (nextQueue) {
+                nextQueue?.push(addedVideo);
+              } else {
+                nextQueue = [addedVideo];
+              }
               io.emit("updateNextQueue", nextQueue);
             }
 
