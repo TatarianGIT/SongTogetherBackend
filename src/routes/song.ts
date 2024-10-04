@@ -2,6 +2,8 @@ import { Router, Request, Response } from "express";
 import dotenv from "dotenv";
 import { findFilesWithExtension } from "../utils/helpers.js";
 import { getVideoDetailsFromYt } from "../utils/ytdl.js";
+import { User } from "lucia";
+import { getAllUserFavs } from "../sqlite3/favouriteServieces.js";
 import axios from "axios";
 
 dotenv.config();
@@ -55,6 +57,22 @@ SongRoute.post("/search", async (req: Request, res: Response) => {
   } catch (error) {
     console.error("Error fetching YouTube data:", error);
     return res.status(400).send({ message: "Failed to fetch YouTube links" });
+  }
+});
+
+SongRoute.get("/favourites", async (req: Request, res: Response) => {
+  try {
+    const user: User = res.locals.user;
+    const favList = await getAllUserFavs(user.id);
+
+    if (favList) {
+      return res.status(200).send(JSON.stringify(favList));
+    }
+
+    return res.status(200).send([]);
+  } catch (error: any) {
+    res.status(400).send({ message: "Failed to fetch YouTube links" });
+    console.log(`Error SongRoute get favourites: ${error}`);
   }
 });
 
