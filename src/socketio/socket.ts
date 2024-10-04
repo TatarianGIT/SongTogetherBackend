@@ -192,6 +192,15 @@ const configureSocketIO = (httpServer: HttpServer) => {
       }
     });
 
+    // Sending current timestamp to frontend
+    socket.on("getCurrentTimestamp", () => {
+      try {
+        io.emit("updateCurrentTimestamp", currentTimestamp);
+      } catch (error) {
+        console.error("socket getCurrentTimestamp", error);
+      }
+    });
+
     // Sending next song queue to frontend
     socket.on("getNextQueue", () => {
       try {
