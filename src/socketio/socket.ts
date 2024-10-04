@@ -200,6 +200,89 @@ const configureSocketIO = (httpServer: HttpServer) => {
         console.error("socket getNextQueue", error);
       }
     });
+
+    // Adding song to user's favs
+    socket.on("addToFavs", async (videoId) => {
+      try {
+        const isAlreadyFav = await isAlreadyFavourite(videoId, user.id);
+
+        if (isAlreadyFav) {
+          sendNotificationToUser(
+            socket,
+            "Woops!",
+            "This song is already in favourites!",
+            "destructive"
+          );
+
+          return;
+        }
+
+        const video = await getVideoDetailsFromYt(videoId, socket);
+
+        if (video) {
+          const result = await addNewFavourite(
+            video.videoId,
+            video.title,
+            video.thumbnailUrl,
+            user.id
+          );
+
+          if (result) {
+            sendNotificationToUser(
+              socket,
+              "Success!",
+              "The song has been added to favorites!",
+              "default"
+            );
+          }
+
+          return;
+        }
+      } catch (error) {
+        console.error("socket getNextQueue", error);
+      }
+    });
+
+    // Removing song from user's favs
+    socket.on("removeFromFavs", async (videoId: string) => {
+      try {
+        const isAlreadyFav = await isAlreadyFavourite(videoId, user.id);
+
+        if (!isAlreadyFav) {
+          sendNotificationToUser(
+            socket,
+            "Woops!",
+            "This song is not your favourite.",
+            "destructive"
+          );
+
+          return;
+        }
+
+        const result = await removeFromFavourites(videoId, user.id);
+
+        if (!result) {
+          sendNotificationToUser(
+            socket,
+            "Error!",
+            "An error occurred while removing song from favourites.",
+            "destructive"
+          );
+          return;
+        }
+
+        sendNotificationToUser(
+          socket,
+          "Success!",
+          "Song was removed from favourites.",
+          "default"
+        );
+
+        return;
+      } catch (error) {
+        console.error("socket getNextQueue", error);
+      }
+    });
   });
 };
 
