@@ -20,7 +20,7 @@ export const bannedWords = ["blacha", "2115", "chivas"];
 
 export const getVideoDetailsFromYt = async (
   videoUrl: string,
-  socket: Socket
+  socket?: Socket
 ) => {
   try {
     const data: videoInfo = await ytdl.getInfo(videoUrl);
@@ -42,12 +42,20 @@ export const getVideoDetailsFromYt = async (
     return videoDetails;
   } catch (error) {
     console.error("getVideoDetails:", error);
-    sendNotificationToUser(
-      socket,
-      "An error occurred!",
-      "Couldn't get video details!",
-      "destructive"
-    );
+    if (socket) {
+      sendNotificationToUser(
+        socket,
+        "An error occurred!",
+        "Couldn't get video details!",
+        "destructive"
+      );
+    } else {
+      sendNotificationToAll(
+        "An error occurred!",
+        "Couldn't get video details!",
+        "destructive"
+      );
+    }
     return null;
   }
 };
