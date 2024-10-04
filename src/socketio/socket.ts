@@ -8,7 +8,11 @@ import type {
   SongQueue,
   VideoDetails,
 } from "../types/index.js";
-import { addUserToList, removeUserFromList } from "./helpers.js";
+import {
+  addUserToList,
+  removeUserFromList,
+  sendNotificationToUser,
+} from "./helpers.js";
 import { createHlsStream, getVideoDetailsFromYt } from "../utils/ytdl.js";
 import {
   deleteDirectoryWithContent,
@@ -27,6 +31,11 @@ import {
   getVideoDetails,
 } from "../sqlite3/videoServieces.js";
 import { updateStaticPath } from "../routes/index.js";
+import {
+  addNewFavourite,
+  isAlreadyFavourite,
+  removeFromFavourites,
+} from "../sqlite3/favouriteServieces.js";
 
 dotenv.config();
 
