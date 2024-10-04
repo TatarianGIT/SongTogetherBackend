@@ -99,10 +99,33 @@ const downloadSegments = async (
     console.log("Getting info...");
     const info = await ytdl.getInfo(url);
 
+    const videoItagPreferences = [136, 135, 134, 133];
+    let availableItags: number[] = [];
+
+    info.formats.forEach((format) => {
+      if (videoItagPreferences.includes(format.itag)) {
+        availableItags = [...availableItags, format.itag];
+      }
+    });
+
+    if (availableItags.length === 0) {
+      availableItags = [160];
+    }
+
     console.log("Getting video format...");
-    let videoFormat = ytdl.chooseFormat(info.formats, { quality: "134" }); // 134 corresponds to 720p video-only
+
+    let videoFormat = null;
+    for (const itag of availableItags) {
+      videoFormat = ytdl.chooseFormat(info.formats, {
+        quality: itag,
+      });
+      if (videoFormat) {
+        break;
+      }
+    }
+
     if (!videoFormat) {
-      throw new Error("Video format not found");
+      throw new Error("No suitable video format found");
     }
 
     console.log("Getting audio format...");
