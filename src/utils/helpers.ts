@@ -117,6 +117,7 @@ export const isVideoSupported = (
   socket: Socket
 ): boolean => {
   if (videoDetails.isLive) {
+    console.log("Livestream cannot be added");
     sendNotificationToUser(
       socket,
       "You can't add live steams!",
@@ -127,10 +128,11 @@ export const isVideoSupported = (
   }
 
   if (isVideoTooLong(videoDetails.lengthSeconds, maxVideoDuration)) {
+    console.log("Video is too long!", videoDetails.lengthSeconds);
     sendNotificationToUser(
       socket,
       "An error occurred!",
-      "Video is too long, maximum allowed length is 20 minutes!",
+      "Video is too long, maximum allowed length is 30 minutes!",
       "destructive"
     );
     return false;
@@ -139,6 +141,7 @@ export const isVideoSupported = (
   const returnedWord = isBannedWordInTitle(videoDetails.title, bannedWords);
 
   if (returnedWord) {
+    console.log(`Video contains banned words: ${returnedWord}`);
     sendNotificationToUser(
       socket,
       "You can't add this video!",
