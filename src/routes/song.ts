@@ -47,7 +47,7 @@ SongRoute.post("/search", async (req: Request, res: Response) => {
     q: keywords,
     key: process.env.YOUTUBE_API_KEY,
     type: "video",
-    maxResults: 4,
+    maxResults: 10,
   };
 
   try {
