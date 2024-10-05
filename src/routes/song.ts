@@ -5,6 +5,7 @@ import { getVideoDetailsFromYt } from "../utils/ytdl.js";
 import { User } from "lucia";
 import { getAllUserFavs } from "../sqlite3/favouriteServieces.js";
 import axios from "axios";
+import { envVars } from "../envVars.js";
 
 dotenv.config();
 
@@ -45,7 +46,7 @@ SongRoute.post("/search", async (req: Request, res: Response) => {
   const params = {
     part: "snippet",
     q: keywords,
-    key: process.env.YOUTUBE_API_KEY,
+    key: envVars!.YOUTUBE_API_KEY,
     type: "video",
     maxResults: 10,
   };

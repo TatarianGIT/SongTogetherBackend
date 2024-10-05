@@ -7,11 +7,11 @@ import morgan from "morgan";
 import { createServer } from "http";
 import { configureSocketIO } from "./socketio/socket.js";
 import MainRoute from "./routes/index.js";
+import { envVars } from "./envVars.js";
 
 dotenv.config();
 
 const app: Application = express();
-const port = process.env.PORT || 8000;
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -20,14 +20,14 @@ app.use(morgan("dev"));
 app.use(
   cookieSession({
     name: "session",
-    keys: [process.env.COOKIE_KEY!],
+    keys: [envVars!.COOKIE_KEY!],
     maxAge: 3 * 24 * 60 * 60 * 1000, // 3days
   })
 );
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL,
+    origin: envVars!.CLIENT_URL!,
     methods: "GET,POST,PUT,DELETE",
     credentials: true,
   })
@@ -39,8 +39,10 @@ const httpServer = createServer(app);
 
 configureSocketIO(httpServer);
 
-httpServer.listen(port, () => {
+httpServer.listen(envVars!.PORT, () => {
   console.log(
-    `============================\nServer is running at http://localhost:${port}`
+    `============================\nServer is running at http://localhost:${
+      envVars!.PORT
+    }`
   );
 });

@@ -2,6 +2,7 @@ import { Router } from "express";
 import { verifyRequestOrigin } from "lucia";
 import { lucia } from "../../config/auth.config.js";
 import dotenv from "dotenv";
+import { envVars } from "../../envVars.js";
 
 dotenv.config();
 
@@ -19,7 +20,7 @@ SessionRoute.use((req, res, next) => {
     !hostHeader ||
     !verifyRequestOrigin(originHeader, [
       hostHeader,
-      process.env.CLIENT_URL as string,
+      envVars!.CLIENT_URL as string,
     ])
   ) {
     return res.status(403).end();

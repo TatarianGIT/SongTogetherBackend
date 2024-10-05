@@ -36,6 +36,7 @@ import {
   isAlreadyFavourite,
   removeFromFavourites,
 } from "../sqlite3/favouriteServieces.js";
+import { envVars } from "../envVars.js";
 
 dotenv.config();
 
@@ -57,7 +58,7 @@ let nextSongHlsPromise: Promise<void> | null = null;
 const configureSocketIO = (httpServer: HttpServer) => {
   io = new Server(httpServer, {
     cors: {
-      origin: process.env.CLIENT_URL,
+      origin: envVars!.CLIENT_URL,
       methods: ["GET", "POST"],
       credentials: true,
     },
