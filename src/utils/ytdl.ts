@@ -10,6 +10,7 @@ import {
   sendNotificationToUser,
 } from "../socketio/helpers.js";
 import { Socket } from "socket.io";
+import { mainDirectory } from "../envVars.js";
 
 const pipeline = promisify(streamPipeline);
 
@@ -72,10 +73,10 @@ export const createHlsStream = async (url: string, videoId: string) => {
 
   try {
     console.log(`Creation of HLS stream for ${videoId} started.`);
-    await promises.mkdir(`./src/song/${videoId}`);
-    const outputFilePath = `./src/song/${videoId}/${videoId}.mp4`;
-    const videoSegmentPath = `./src/song/${videoId}/video.mp4`;
-    const audioSegmentPath = `./src/song/${videoId}/audio.mp4`;
+    await promises.mkdir(`${mainDirectory}/song/${videoId}`);
+    const outputFilePath = `${mainDirectory}/song/${videoId}/${videoId}.mp4`;
+    const videoSegmentPath = `${mainDirectory}/song/${videoId}/video.mp4`;
+    const audioSegmentPath = `${mainDirectory}/song/${videoId}/audio.mp4`;
 
     console.log("Downloading segments...");
     await downloadSegments(url, videoSegmentPath, audioSegmentPath);

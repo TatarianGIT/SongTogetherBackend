@@ -1,6 +1,7 @@
 import ffmpeg from "fluent-ffmpeg";
 import ffmpegInstaller from "@ffmpeg-installer/ffmpeg";
 import fs from "fs/promises";
+import { mainDirectory } from "../envVars.js";
 
 ffmpeg.setFfmpegPath(ffmpegInstaller.path);
 
@@ -50,7 +51,7 @@ export const convertToHls = async (videoPath: string, videoId?: string) => {
         "-hls_list_size 0",
         "-f hls",
       ])
-      .output(`./src/song/${videoId}/${videoId}.m3u8`)
+      .output(`${mainDirectory}/song/${videoId}/${videoId}.m3u8`)
       .on("end", async () => {
         await fs.unlink(videoPath);
         console.log("Conversion to HLS finished");

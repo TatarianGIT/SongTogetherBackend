@@ -1,4 +1,6 @@
 import dotenv from "dotenv";
+import { dirname } from "path";
+import { fileURLToPath } from "url";
 
 dotenv.config();
 
@@ -22,3 +24,6 @@ export const envVars =
         COOKIE_KEY: process.env.COOKIE_KEY_DEV,
       }
     : undefined;
+
+const __filename = fileURLToPath(import.meta.url);
+export const mainDirectory = dirname(__filename);
