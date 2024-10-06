@@ -43,6 +43,7 @@ MainRoute.use("", async (req: Request, res: Response) => {
 
     fs.readFile(filePath, (error, content) => {
       if (error) {
+        console.log(error);
         return res.status(400).json({ message: "Unexpected error occurred" });
       } else {
         res.writeHead(200, { "Content-Type": "application/vnd.apple.mpegurl" });
