@@ -1,8 +1,9 @@
-import path from "path";
+import path, { dirname } from "path";
 import fs from "fs";
 import { Socket } from "socket.io";
 import { sendNotificationToUser } from "../socketio/helpers.js";
 import { bannedWords, maxVideoDuration } from "./ytdl.js";
+import { mainDirectory } from "../envVars.js";
 
 export async function deleteDirectoryWithContent({
   directoryPath,
@@ -152,4 +153,10 @@ export const isVideoSupported = (
   }
 
   return true;
+};
+
+export const getStreamPath = (videoPath: string) => {
+  const newMainDir = dirname(mainDirectory);
+  let result = videoPath.substring(newMainDir.length);
+  return result;
 };

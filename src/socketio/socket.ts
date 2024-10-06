@@ -17,6 +17,7 @@ import { createHlsStream, getVideoDetailsFromYt } from "../utils/ytdl.js";
 import {
   deleteDirectoryWithContent,
   findFilesWithExtension,
+  getStreamPath,
   isVideoSupported,
   listDirectories,
 } from "../utils/helpers.js";
@@ -382,7 +383,11 @@ const startQueue = async (): Promise<void> => {
 
   // check if .m3u8 file exists
   if (filteredFiles) {
-    fullFilePath = `http://localhost:3000/src/song/${currentSong.videoId}/${currentSong.videoId}.m3u8`;
+    const streamPath = await getStreamPath(
+      `${mainDirectory}/song/${currentSong.videoId}/${currentSong.videoId}.m3u8`
+    );
+
+    fullFilePath = `http://localhost:${envVars?.PORT}${streamPath}`;
     io.emit("updateStreamPath", fullFilePath);
   }
 
