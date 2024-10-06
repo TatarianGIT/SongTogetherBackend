@@ -4,6 +4,8 @@ import { isAuthenticated } from "../middleware/isAuthenticated.js";
 import SongRoute from "./song.js";
 import SessionRoute from "./auth/session.js";
 import fs from "fs";
+import { mainDirectory } from "../envVars.js";
+import { dirname } from "path";
 
 const MainRoute = Router();
 
@@ -23,25 +25,26 @@ MainRoute.use("/song", isAuthenticated, SongRoute);
 export let currentSongStaticPath: string | undefined;
 
 export const updateStaticPath = (currentSongId: string | undefined) => {
-  currentSongStaticPath = currentSongId;
+  currentSongStaticPath = `${currentSongId}`;
 };
 
 MainRoute.use("", async (req: Request, res: Response) => {
   try {
-    const baseDirectory = `./src/song/${currentSongStaticPath}`;
-    const filePath = "." + req.url;
+    const streamFile = `${currentSongStaticPath}`;
+    const requestFile = req.url;
+    const fullFilePath = dirname(mainDirectory) + requestFile;
 
     if (!currentSongStaticPath) {
       return res.status(404).json({ message: "No song available" });
     }
 
-    if (!filePath.startsWith(baseDirectory)) {
+    if (!requestFile.includes(streamFile)) {
       return res
         .status(403)
         .json({ message: "Access to this directory is forbidden" });
     }
 
-    fs.readFile(filePath, (error, content) => {
+    fs.readFile(fullFilePath, (error, content) => {
       if (error) {
         console.log(error);
         return res.status(400).json({ message: "Unexpected error occurred" });
