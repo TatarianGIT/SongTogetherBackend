@@ -36,7 +36,7 @@ import {
   isAlreadyFavourite,
   removeFromFavourites,
 } from "../sqlite3/favouriteServieces.js";
-import { envVars } from "../envVars.js";
+import { envVars, mainDirectory } from "../envVars.js";
 
 dotenv.config();
 
@@ -149,9 +149,9 @@ const configureSocketIO = (httpServer: HttpServer) => {
             }
 
             if (nextQueue?.length === 1) {
-              let directories = await listDirectories("./src/song");
+              let directories = await listDirectories(`${mainDirectory}/song`);
               let filteredFiles = await findFilesWithExtension(
-                `./src/song/${nextQueue[0].videoId}`,
+                `${mainDirectory}/song/${nextQueue[0].videoId}`,
                 ".m3u8"
               );
               if (
@@ -311,7 +311,7 @@ const mainFunction = async () => {
   }
 
   await deleteDirectoryWithContent({
-    directoryPath: "./src/song",
+    directoryPath: `${mainDirectory}/song`,
     deleteDirectory: false,
   });
 
@@ -361,9 +361,9 @@ const startQueue = async (): Promise<void> => {
   }
 
   // get all directories and current song's .m3u8 file
-  let directories = await listDirectories("./src/song");
+  let directories = await listDirectories(`${mainDirectory}/song`);
   let filteredFiles = await findFilesWithExtension(
-    `./src/song/${currentSong.videoId}`,
+    `${mainDirectory}/song/${currentSong.videoId}`,
     ".m3u8"
   );
 
@@ -376,7 +376,7 @@ const startQueue = async (): Promise<void> => {
 
   // get .m3u8 file
   filteredFiles = await findFilesWithExtension(
-    `./src/song/${currentSong.videoId}`,
+    `${mainDirectory}/song/${currentSong.videoId}`,
     ".m3u8"
   );
 
@@ -402,7 +402,7 @@ const startQueue = async (): Promise<void> => {
   // remove directory of a video and its stream files if next video isn't duplicate
   if (!nextQueue || currentSong.videoId !== nextQueue[0]?.videoId) {
     await deleteDirectoryWithContent({
-      directoryPath: `./src/song/${currentSong.videoId}`,
+      directoryPath: `${mainDirectory}/song/${currentSong.videoId}`,
       deleteDirectory: true,
     });
   }
