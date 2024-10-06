@@ -2,13 +2,6 @@ import dotenv from "dotenv";
 
 dotenv.config();
 
-const DISCORD_CLIENT_ID =
-  process.env.NODE_ENV === "production"
-    ? process.env.DISCORD_CLIENT_ID_PROD
-    : process.env.NODE_ENV === "development"
-    ? process.env.DISCORD_CLIENT_ID_DEV
-    : undefined;
-
 export const envVars =
   process.env.NODE_ENV === "production"
     ? {
