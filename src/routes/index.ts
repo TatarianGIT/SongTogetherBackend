@@ -32,12 +32,12 @@ MainRoute.use("", async (req: Request, res: Response) => {
     const filePath = "." + req.url;
 
     if (!currentSongStaticPath) {
-      return res.status(400).json({ message: "No song available" });
+      return res.status(404).json({ message: "No song available" });
     }
 
     if (!filePath.startsWith(baseDirectory)) {
       return res
-        .status(400)
+        .status(403)
         .json({ message: "Access to this directory is forbidden" });
     }
 
