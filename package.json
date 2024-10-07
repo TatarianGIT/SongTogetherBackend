@@ -6,10 +6,7 @@
   "scripts": {
     "build": "tsc",
     "start": "NODE_ENV=production node dist/index.js",
-    "dev": "NODE_ENV=development nodemon src/index.ts",
-    "db:generate": "drizzle-kit generate",
-    "db:migrate": "drizzle-kit migrate",
-    "db:studio": "drizzle-kit studio"
+    "dev": "NODE_ENV=development nodemon src/index.ts"
   },
   "type": "module",
   "keywords": [],
