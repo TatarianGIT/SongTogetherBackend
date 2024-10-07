@@ -37,9 +37,9 @@ import {
   isAlreadyFavourite,
   removeFromFavourites,
 } from "../sqlite3/favouriteServieces.js";
-import { envVars, mainDirectory } from "../envVars.js";
+import { mainDirectory } from "../envVars.js";
 
-dotenv.config();
+dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 let io: Server;
 
@@ -59,7 +59,7 @@ let nextSongHlsPromise: Promise<void> | null = null;
 const configureSocketIO = (httpServer: HttpServer) => {
   io = new Server(httpServer, {
     cors: {
-      origin: envVars!.CLIENT_URL,
+      origin: process.env.CLIENT_URL,
       methods: ["GET", "POST"],
       credentials: true,
     },
@@ -387,7 +387,7 @@ const startQueue = async (): Promise<void> => {
       `${mainDirectory}/song/${currentSong.videoId}/${currentSong.videoId}.m3u8`
     );
 
-    fullFilePath = `http://localhost:${envVars?.PORT}${streamPath}`;
+    fullFilePath = `http://localhost:${process.env.PORT}${streamPath}`;
     io.emit("updateStreamPath", fullFilePath);
   }
 

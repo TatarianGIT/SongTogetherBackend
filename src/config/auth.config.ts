@@ -5,9 +5,8 @@ import { db } from "../sqlite3/db.js";
 import { BetterSqlite3Adapter } from "@lucia-auth/adapter-sqlite";
 
 import type { DatabaseUser } from "../types/index.js";
-import { envVars } from "../envVars.js";
 
-dotenv.config();
+dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 const adapter = new BetterSqlite3Adapter(db, {
   user: "user",
@@ -29,9 +28,9 @@ export const lucia = new Lucia(adapter, {
 });
 
 export const discord = new Discord(
-  envVars!.DISCORD_CLIENT_ID!,
-  envVars!.DISCORD_CLIENT_SECRET!,
-  `http://localhost:${envVars!.PORT}/auth/discord/callback`
+  process.env.DISCORD_CLIENT_ID!,
+  process.env.DISCORD_CLIENT_SECRET!,
+  `http://localhost:${process.env.PORT}/auth/discord/callback`
 );
 
 declare module "lucia" {

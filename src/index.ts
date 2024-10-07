@@ -7,11 +7,11 @@ import morgan from "morgan";
 import { createServer } from "http";
 import { configureSocketIO } from "./socketio/socket.js";
 import MainRoute from "./routes/index.js";
-import { envVars } from "./envVars.js";
 
-dotenv.config();
+dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 const app: Application = express();
+const PORT = process.env.PORT;
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -20,14 +20,14 @@ app.use(morgan("dev"));
 app.use(
   cookieSession({
     name: "session",
-    keys: [envVars!.COOKIE_KEY!],
+    keys: [process.env.COOKIE_KEY!],
     maxAge: 3 * 24 * 60 * 60 * 1000, // 3days
   })
 );
 
 app.use(
   cors({
-    origin: envVars!.CLIENT_URL!,
+    origin: process.env.CLIENT_URL!,
     methods: "GET,POST,PUT,DELETE",
     credentials: true,
   })
@@ -39,10 +39,8 @@ const httpServer = createServer(app);
 
 configureSocketIO(httpServer);
 
-httpServer.listen(envVars!.PORT, () => {
+httpServer.listen(PORT, () => {
   console.log(
-    `============================\nServer is running at http://localhost:${
-      envVars!.PORT
-    }`
+    `Running ${process.env.NODE_ENV} build of SongTogether\nServer is running at http://localhost:${PORT}\n\n`
   );
 });

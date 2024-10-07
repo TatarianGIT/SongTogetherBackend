@@ -9,9 +9,8 @@ import dotenv from "dotenv";
 import type { DatabaseUser, DiscordUser } from "../../types/index.js";
 import { isAuthenticated } from "../../middleware/isAuthenticated.js";
 import { getUserFromSession } from "../../sqlite3/userServieces.js";
-import { envVars } from "../../envVars.js";
 
-dotenv.config();
+dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 export const AuthRoute = express.Router();
 
@@ -67,7 +66,7 @@ AuthRoute.get("/discord/callback", async (req, res) => {
           "Set-Cookie",
           lucia.createSessionCookie(session.id).serialize()
         )
-        .redirect(envVars!.CLIENT_URL as string);
+        .redirect(process.env.CLIENT_URL as string);
     }
 
     const generatedUserId = generateId(15);
@@ -94,7 +93,7 @@ AuthRoute.get("/discord/callback", async (req, res) => {
         "Set-Cookie",
         lucia.createSessionCookie(session.id).serialize()
       )
-      .redirect(envVars!.CLIENT_URL as string);
+      .redirect(process.env.CLIENT_URL as string);
   } catch (e) {
     if (
       e instanceof OAuth2RequestError &&
@@ -118,7 +117,7 @@ AuthRoute.post("/logout", async (req, res) => {
   await lucia.invalidateSession(res.locals.session.id);
   return res
     .setHeader("Set-Cookie", lucia.createBlankSessionCookie().serialize())
-    .redirect(envVars!.CLIENT_URL as string);
+    .redirect(process.env.CLIENT_URL as string);
 });
 
 // Send user details

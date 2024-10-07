@@ -3,9 +3,8 @@ import dotenv from "dotenv";
 import { User } from "lucia";
 import { getAllUserFavs } from "../sqlite3/favouriteServieces.js";
 import axios from "axios";
-import { envVars } from "../envVars.js";
 
-dotenv.config();
+dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 const SongRoute = Router();
 
@@ -24,7 +23,7 @@ SongRoute.post("/search", async (req: Request, res: Response) => {
   const params = {
     part: "snippet",
     q: keywords,
-    key: envVars!.YOUTUBE_API_KEY,
+    key: process.env.YOUTUBE_API_KEY,
     type: "video",
     maxResults: 10,
   };
