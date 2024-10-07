@@ -30,7 +30,7 @@ export const lucia = new Lucia(adapter, {
 export const discord = new Discord(
   process.env.DISCORD_CLIENT_ID!,
   process.env.DISCORD_CLIENT_SECRET!,
-  `http://localhost:${process.env.PORT}/auth/discord/callback`
+  `http://${process.env.HOST}:${process.env.PORT}/auth/discord/callback`
 );
 
 declare module "lucia" {

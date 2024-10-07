@@ -12,6 +12,7 @@ dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
 const app: Application = express();
 const PORT = process.env.PORT;
+const HOST = process.env.HOST;
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -41,6 +42,6 @@ configureSocketIO(httpServer);
 
 httpServer.listen(PORT, () => {
   console.log(
-    `Running ${process.env.NODE_ENV} build of SongTogether\nServer is running at http://localhost:${PORT}\n\n`
+    `Running ${process.env.NODE_ENV} build of SongTogether\nServer is running at http://${HOST}:${PORT}\n\n`
   );
 });

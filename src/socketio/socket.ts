@@ -387,7 +387,7 @@ const startQueue = async (): Promise<void> => {
       `${mainDirectory}/song/${currentSong.videoId}/${currentSong.videoId}.m3u8`
     );
 
-    fullFilePath = `http://localhost:${process.env.PORT}${streamPath}`;
+    fullFilePath = `http://${process.env.HOST}:${process.env.PORT}${streamPath}`;
     io.emit("updateStreamPath", fullFilePath);
   }
 
