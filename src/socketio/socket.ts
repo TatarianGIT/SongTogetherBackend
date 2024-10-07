@@ -426,7 +426,12 @@ const handleNextSong = async (currentSongId: string) => {
   try {
     await changeSongStatus(currentSongId, { action: "currentToPrev" });
 
-    prevQueue?.unshift(currentSong!);
+    if (prevQueue && currentSong) {
+      prevQueue.unshift(currentSong);
+    } else if (currentSong) {
+      prevQueue = [currentSong];
+    }
+
     io.emit("updatePrevQueue", prevQueue);
 
     const nextSong = await getNextVideo();
