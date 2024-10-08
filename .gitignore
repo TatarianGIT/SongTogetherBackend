@@ -133,6 +133,7 @@ dist
 
 # Downloaded song and HLS stream files
 src/song/*
+!src/song/.gitkeep
 sqlite.db
 .nvmrc
 database.db
