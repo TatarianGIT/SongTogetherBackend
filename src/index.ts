@@ -4,7 +4,8 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import cookieSession from "cookie-session";
 import morgan from "morgan";
-import { createServer } from "http";
+import { createServer } from "https";
+import fs from 'fs';
 import { configureSocketIO } from "./socketio/socket.js";
 import MainRoute from "./routes/index.js";
 
@@ -13,6 +14,9 @@ dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 const app: Application = express();
 const PORT = process.env.PORT;
 const HOST = process.env.HOST;
+
+const sslKey = fs.readFileSync("/home/luke/selfsigned.key", "utf8");
+const sslCert = fs.readFileSync("/home/luke/selfsigned.crt", "utf8");
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -36,11 +40,11 @@ app.use(
 
 app.use(MainRoute);
 
-const httpServer = createServer(app);
+const httpsServer = createServer({ key: sslKey, cert: sslCert }, app);
 
-configureSocketIO(httpServer);
+configureSocketIO(httpsServer);
 
-httpServer.listen(PORT, () => {
+httpsServer.listen(PORT, () => {
   console.log(
     `Running ${process.env.NODE_ENV} build of SongTogether\nServer is running at http://${HOST}:${PORT}\n\n`
   );

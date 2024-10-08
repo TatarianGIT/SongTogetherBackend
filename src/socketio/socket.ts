@@ -1,5 +1,5 @@
 import { Server } from "socket.io";
-import { Server as HttpServer } from "http";
+import { Server as HttpsServer } from "https";
 import type {
   CurrentSong,
   DatabaseUser,
@@ -56,12 +56,12 @@ let currentTimestamp = 0;
 
 let nextSongHlsPromise: Promise<void> | null = null;
 
-const configureSocketIO = (httpServer: HttpServer) => {
-  io = new Server(httpServer, {
+const configureSocketIO = (httpsServer: HttpsServer) => {
+  io = new Server(httpsServer, {
     cors: {
       origin: process.env.CLIENT_URL,
       methods: ["GET", "POST"],
-      credentials: true,
+      credentials: true
     },
   });
 
@@ -387,7 +387,7 @@ const startQueue = async (): Promise<void> => {
       `${mainDirectory}/song/${currentSong.videoId}/${currentSong.videoId}.m3u8`
     );
 
-    fullFilePath = `http://${process.env.HOST}:${process.env.PORT}${streamPath}`;
+    fullFilePath = `https://${process.env.HOST}:${process.env.PORT}${streamPath}`;
     io.emit("updateStreamPath", fullFilePath);
   }
 
