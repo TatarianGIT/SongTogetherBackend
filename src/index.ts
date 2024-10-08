@@ -16,8 +16,8 @@ const PORT = process.env.PORT;
 const HOST_URL = process.env.HOST_URL;
 const NODE_ENV = process.env.NODE_ENV;
 
-const sslKey = fs.readFileSync("/home/luke/selfsigned.key", "utf8");
-const sslCert = fs.readFileSync("/home/luke/selfsigned.crt", "utf8");
+const sslKey = fs.readFileSync(process.env.SSL_KEY as string, "utf8");
+const sslCert = fs.readFileSync(process.env.SSL_CRT as string, "utf8");
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
