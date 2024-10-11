@@ -11,6 +11,8 @@ import {
 } from "../socketio/helpers.js";
 import { Socket } from "socket.io";
 import { mainDirectory } from "../envVars.js";
+import { cookies } from "./cookies.js";
+import { proxyList } from "./proxyList.js";
 
 const pipeline = promisify(streamPipeline);
 
@@ -23,42 +25,88 @@ export const getVideoDetailsFromYt = async (
   videoUrl: string,
   socket?: Socket
 ) => {
-  try {
-    const data: videoInfo = await ytdl.getInfo(videoUrl);
-    const videoId = ytdl.getVideoID(videoUrl);
+  let videoDetails = null;
 
-    const isLive = data.videoDetails.liveBroadcastDetails?.isLiveNow;
-    const thumbnailUrl = data.videoDetails.thumbnails[3].url;
-    const { lengthSeconds, title } = data.videoDetails;
+  for (let i = 0; i < proxyList.length; i++) {
+    const proxy = proxyList[i];
 
-    const videoDetails = {
-      videoUrl,
-      videoId,
-      title,
-      lengthSeconds,
-      thumbnailUrl,
-      isLive,
-    };
+    try {
+      const agent = ytdl.createProxyAgent(
+        { uri: `${proxy.uri}:${proxy.port}` },
+        cookies
+      );
 
-    return videoDetails;
-  } catch (error) {
-    console.error("getVideoDetails:", error);
+      const data: videoInfo = await ytdl.getInfo(videoUrl, { agent });
+      const videoId = ytdl.getVideoID(videoUrl);
+
+      const isLive = data.videoDetails.liveBroadcastDetails?.isLiveNow;
+      const thumbnailUrl = data.videoDetails.thumbnails[3].url;
+      const { lengthSeconds, title } = data.videoDetails;
+
+      videoDetails = {
+        videoUrl,
+        videoId,
+        title,
+        lengthSeconds,
+        thumbnailUrl,
+        isLive,
+      };
+
+      return videoDetails;
+    } catch (error: any) {
+      console.error(
+        `Proxy ${proxy.uri}:${proxy.port} failed with error:`,
+        error
+      );
+
+      if (
+        error.message.includes(
+          "UnrecoverableError: Sign in to confirm you're not a bot"
+        )
+      ) {
+        console.log(
+          `Switching to next proxy... (${i + 1}/${proxyList.length})`
+        );
+        continue; // Try the next proxy
+      } else {
+        if (socket) {
+          sendNotificationToUser(
+            socket,
+            "An error occurred!",
+            "Couldn't get video details!",
+            "destructive"
+          );
+        } else {
+          sendNotificationToAll(
+            "An error occurred!",
+            "Couldn't get video details!",
+            "destructive"
+          );
+        }
+        return null;
+      }
+    }
+  }
+
+  if (!videoDetails) {
+    console.error("All proxies failed.");
     if (socket) {
       sendNotificationToUser(
         socket,
         "An error occurred!",
-        "Couldn't get video details!",
+        "Couldn't get video details after trying all proxies.",
         "destructive"
       );
     } else {
       sendNotificationToAll(
         "An error occurred!",
-        "Couldn't get video details!",
+        "Couldn't get video details after trying all proxies.",
         "destructive"
       );
     }
-    return null;
   }
+
+  return null;
 };
 
 let isProcessing = false;
