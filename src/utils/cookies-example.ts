@@ -1,0 +1,31 @@
+export const cookies = [
+  {
+    domain: "",
+    expirationDate: 1,
+    hostOnly: false,
+    httpOnly: false,
+    name: "",
+    path: "",
+    sameSite: "",
+    secure: true,
+    session: false,
+    storeId: "",
+    value: "",
+    id: 1,
+  },
+  {
+    domain: "",
+    expirationDate: 1,
+    hostOnly: false,
+    httpOnly: true,
+    name: "",
+    path: "/",
+    sameSite: "",
+    secure: true,
+    session: false,
+    storeId: "",
+    value: "",
+    id: 2,
+  },
+  // ...
+];
