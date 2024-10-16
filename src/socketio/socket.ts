@@ -59,9 +59,9 @@ let nextSongHlsPromise: Promise<void> | null = null;
 const configureSocketIO = (httpsServer: HttpsServer) => {
   io = new Server(httpsServer, {
     cors: {
-      origin: process.env.CLIENT_URL,
+      origin: process.env.CLIENT_URL as string,
       methods: ["GET", "POST"],
-      credentials: true
+      credentials: true,
     },
   });
 
@@ -387,7 +387,7 @@ const startQueue = async (): Promise<void> => {
       `${mainDirectory}/song/${currentSong.videoId}/${currentSong.videoId}.m3u8`
     );
 
-    fullFilePath = `https://${process.env.HOST}:${process.env.PORT}${streamPath}`;
+    fullFilePath = `https://${process.env.HOST_URL}:${process.env.PORT}${streamPath}`;
     io.emit("updateStreamPath", fullFilePath);
   }
 
