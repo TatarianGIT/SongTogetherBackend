@@ -21,21 +21,27 @@ ffmpeg.setFfmpegPath(ffmpegPath!);
 export const maxVideoDuration = 1800; // 30 mins
 export const bannedWords = ["blacha", "2115", "chivas"];
 
+export let proxyIndex = 0;
+let proxy = proxyList[0];
+let agent = ytdl.createProxyAgent({ uri: `http://${proxy.uri}:${proxy.port}` });
+
+export type VideoDetails = {
+  videoUrl: string;
+  videoId: string;
+  title: string;
+  lengthSeconds: string;
+  thumbnailUrl: string;
+  isLive: boolean | undefined;
+};
+
 export const getVideoDetailsFromYt = async (
   videoUrl: string,
   socket?: Socket
-) => {
+): Promise<VideoDetails | null | undefined> => {
   let videoDetails = null;
 
-  for (let i = 0; i < proxyList.length; i++) {
-    const proxy = proxyList[i];
-
+  return await withProxy(async (): Promise<VideoDetails | undefined> => {
     try {
-      const agent = ytdl.createProxyAgent(
-        { uri: `${proxy.uri}:${proxy.port}` },
-        cookies
-      );
-
       const data: videoInfo = await ytdl.getInfo(videoUrl, { agent });
       const videoId = ytdl.getVideoID(videoUrl);
 
@@ -52,61 +58,31 @@ export const getVideoDetailsFromYt = async (
         isLive,
       };
 
-      return videoDetails;
+      console.log(`Found ${videoDetails.title} using proxy id: ${proxyIndex}`);
+
+      if (videoDetails) return videoDetails;
     } catch (error: any) {
       console.error(
-        `Proxy ${proxy.uri}:${proxy.port} failed with error:`,
+        `Proxy ${proxyIndex}. ${proxy.uri}:${proxy.port} failed with error:`,
         error
       );
 
-      if (
-        error.message.includes(
-          "UnrecoverableError: Sign in to confirm you're not a bot"
-        )
-      ) {
-        console.log(
-          `Switching to next proxy... (${i + 1}/${proxyList.length})`
+      if (socket) {
+        sendNotificationToUser(
+          socket,
+          "An error occurred!",
+          "Couldn't get video details!",
+          "destructive"
         );
-        continue; // Try the next proxy
       } else {
-        if (socket) {
-          sendNotificationToUser(
-            socket,
-            "An error occurred!",
-            "Couldn't get video details!",
-            "destructive"
-          );
-        } else {
-          sendNotificationToAll(
-            "An error occurred!",
-            "Couldn't get video details!",
-            "destructive"
-          );
-        }
-        return null;
+        sendNotificationToAll(
+          "An error occurred!",
+          "Couldn't get video details!",
+          "destructive"
+        );
       }
     }
-  }
-
-  if (!videoDetails) {
-    console.error("All proxies failed.");
-    if (socket) {
-      sendNotificationToUser(
-        socket,
-        "An error occurred!",
-        "Couldn't get video details after trying all proxies.",
-        "destructive"
-      );
-    } else {
-      sendNotificationToAll(
-        "An error occurred!",
-        "Couldn't get video details after trying all proxies.",
-        "destructive"
-      );
-    }
-  }
-
-  return null;
+  });
 };
 
 let isProcessing = false;
@@ -152,80 +128,141 @@ const downloadSegments = async (
   videoSegmentPath: string,
   audioSegmentPath: string
 ) => {
-  try {
-    console.log("Getting info...");
-    const info = await ytdl.getInfo(url);
+  return await withProxy(async (): Promise<void> => {
+    try {
+      console.log("Getting info...");
+      console.log(`Using proxy id ${proxyIndex}. ${proxy.uri}`);
 
-    const videoItagPreferences = [136, 135, 134, 133];
-    let availableItags: number[] = [];
+      const info = await ytdl.getInfo(url, { agent });
 
-    info.formats.forEach((format) => {
-      if (videoItagPreferences.includes(format.itag)) {
-        availableItags = [...availableItags, format.itag];
+      // const videoItagPreferences = [136, 135, 134, 133]; // 720p and lower
+      const videoItagPreferences = [135, 134, 133]; // 480p and lower
+      let availableItags: number[] = [];
+
+      info.formats.forEach((format) => {
+        if (videoItagPreferences.includes(format.itag)) {
+          availableItags = [...availableItags, format.itag];
+        }
+      });
+
+      if (availableItags.length === 0) {
+        availableItags = [160];
       }
-    });
 
-    if (availableItags.length === 0) {
-      availableItags = [160];
-    }
+      console.log("Getting video format...");
 
-    console.log("Getting video format...");
-
-    let videoFormat = null;
-    for (const itag of availableItags) {
-      videoFormat = ytdl.chooseFormat(info.formats, {
-        quality: itag,
-      });
-      if (videoFormat) {
-        break;
+      let videoFormat = null;
+      for (const itag of availableItags) {
+        videoFormat = ytdl.chooseFormat(info.formats, {
+          quality: itag,
+        });
+        if (videoFormat) {
+          break;
+        }
       }
-    }
 
-    if (!videoFormat) {
-      throw new Error("No suitable video format found");
-    }
+      if (!videoFormat) {
+        throw new Error("No suitable video format found");
+      }
 
-    console.log("Getting audio format...");
-    const audioFormat = ytdl.chooseFormat(info.formats, {
-      quality: "highestaudio",
-    });
-    if (!audioFormat) {
-      throw new Error("Audio format not found");
-    }
-
-    const videoStream = ytdl(url, { format: videoFormat });
-    const audioStream = ytdl(url, { format: audioFormat });
-
-    console.log("Getting video...");
-    const videoPromise = pipeline(
-      videoStream,
-      fs.createWriteStream(videoSegmentPath)
-    )
-      .then(() => {
-        console.log("Video segment finished");
-      })
-      .catch((err) => {
-        console.error("Error in video stream:", err);
-        throw err;
+      console.log("Getting audio format...");
+      const audioFormat = ytdl.chooseFormat(info.formats, {
+        quality: "highestaudio",
       });
+      if (!audioFormat) {
+        throw new Error("Audio format not found");
+      }
 
-    console.log("Getting audio...");
-    const audioPromise = pipeline(
-      audioStream,
-      fs.createWriteStream(audioSegmentPath)
-    )
-      .then(() => {
-        console.log("Audio segment finished");
-      })
-      .catch((err) => {
-        console.error("Error in audio stream:", err);
-        throw err;
-      });
+      const videoStream = ytdl(url, { format: videoFormat });
+      const audioStream = ytdl(url, { format: audioFormat });
 
-    await Promise.all([videoPromise, audioPromise]);
+      console.log("Getting video...");
+      const videoPromise = await pipeline(
+        videoStream,
+        fs.createWriteStream(videoSegmentPath)
+      )
+        .catch(async (err: any) => {
+          if (
+            err instanceof Error &&
+            err.message.includes("Status code: 403")
+          ) {
+            console.log(`Switching proxy to number ${proxyIndex}`);
 
-    console.log("Both video and audio segments finished");
-  } catch (err: any) {
-    console.error("downloadSegments Error:", err.message);
-  }
+            proxyIndex += 1;
+
+            proxy = proxyList[proxyIndex];
+            agent = ytdl.createProxyAgent(
+              { uri: `http://${proxy.uri}:${proxy.port}` },
+              cookies
+            );
+
+            await downloadSegments(url, videoSegmentPath, audioSegmentPath);
+          }
+          console.error("Error in video stream:", err);
+        })
+        .finally(() => {
+          console.log("Audio segment finished");
+        });
+
+      console.log("Getting audio...");
+      const audioPromise = await pipeline(
+        audioStream,
+        fs.createWriteStream(audioSegmentPath)
+      )
+        .catch(async (err: any) => {
+          if (
+            err instanceof Error &&
+            err.message.includes("Status code: 403")
+          ) {
+            console.log(`Switching proxy to number ${proxyIndex}`);
+
+            proxyIndex += 1;
+
+            proxy = proxyList[proxyIndex];
+            agent = ytdl.createProxyAgent(
+              { uri: `http://${proxy.uri}:${proxy.port}` },
+              cookies
+            );
+
+            await downloadSegments(url, videoSegmentPath, audioSegmentPath);
+          }
+          console.error("Error in audio stream:", err);
+        })
+        .finally(() => {
+          console.log("Audio segment finished");
+        });
+
+      await Promise.all([videoPromise, audioPromise]);
+
+      console.log("Both video and audio segments finished");
+    } catch (err: any) {
+      console.error("downloadSegments Error:", err.message);
+    }
+  });
 };
+
+async function withProxy<T>(callback: () => Promise<T>): Promise<T> {
+  try {
+    return await callback();
+  } catch (error: any) {
+    if (
+      error instanceof Error &&
+      (error.message.includes("Sign in to confirm you're not a bot") ||
+        error.message.includes("MinigetError: Status code: 403"))
+    ) {
+      console.log(`Switching proxy to number ${proxyIndex}`);
+
+      proxyIndex += 1;
+
+      proxy = proxyList[proxyIndex];
+      agent = ytdl.createProxyAgent({
+        uri: `http://${proxy.uri}:${proxy.port}`,
+      });
+
+      return await callback();
+    } else {
+      console.error("withProxy", error);
+      throw error;
+    }
+  }
+}
