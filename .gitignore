@@ -138,4 +138,4 @@ sqlite.db
 database.db
 
 src/utils/cookies.ts
-src/utils/proxyList.ts
+src/utils/proxy.ts
