@@ -12,7 +12,9 @@ import {
 import { Socket } from "socket.io";
 import { mainDirectory } from "../envVars.js";
 import { cookies } from "./cookies.js";
-import { proxyList } from "./proxyList.js";
+import { proxyAuth, proxyList } from "./proxy.js";
+import { exec } from "child_process";
+import util from "util";
 
 const pipeline = promisify(streamPipeline);
 
@@ -40,49 +42,63 @@ export const getVideoDetailsFromYt = async (
 ): Promise<VideoDetails | null | undefined> => {
   let videoDetails = null;
 
-  return await withProxy(async (): Promise<VideoDetails | undefined> => {
-    try {
-      const data: videoInfo = await ytdl.getInfo(videoUrl, { agent });
-      const videoId = ytdl.getVideoID(videoUrl);
+  try {
+    const data: videoInfo = await ytdl.getInfo(videoUrl, { agent });
+    const videoId = ytdl.getVideoID(videoUrl);
 
-      const isLive = data.videoDetails.liveBroadcastDetails?.isLiveNow;
-      const thumbnailUrl = data.videoDetails.thumbnails[3].url;
-      const { lengthSeconds, title } = data.videoDetails;
+    const isLive = data.videoDetails.liveBroadcastDetails?.isLiveNow;
+    const thumbnailUrl = data.videoDetails.thumbnails[3].url;
+    const { lengthSeconds, title } = data.videoDetails;
 
-      videoDetails = {
-        videoUrl,
-        videoId,
-        title,
-        lengthSeconds,
-        thumbnailUrl,
-        isLive,
-      };
+    videoDetails = {
+      videoUrl,
+      videoId,
+      title,
+      lengthSeconds,
+      thumbnailUrl,
+      isLive,
+    };
 
-      console.log(`Found ${videoDetails.title} using proxy id: ${proxyIndex}`);
+    console.log(`Found ${videoDetails.title} using proxy id: ${proxyIndex}`);
 
-      if (videoDetails) return videoDetails;
-    } catch (error: any) {
-      console.error(
-        `Proxy ${proxyIndex}. ${proxy.uri}:${proxy.port} failed with error:`,
-        error
-      );
+    if (videoDetails) return videoDetails;
+  } catch (error: any) {
+    if (
+      error instanceof Error &&
+      (error.message.includes("403") || error.message.includes("bot"))
+    ) {
+      console.log(`Switching proxy to number ${proxyIndex}`);
 
-      if (socket) {
-        sendNotificationToUser(
-          socket,
-          "An error occurred!",
-          "Couldn't get video details!",
-          "destructive"
-        );
-      } else {
-        sendNotificationToAll(
-          "An error occurred!",
-          "Couldn't get video details!",
-          "destructive"
-        );
-      }
+      proxyIndex += 1;
+
+      proxy = proxyList[proxyIndex];
+      agent = ytdl.createProxyAgent({
+        uri: `http://${proxy.uri}:${proxy.port}`,
+      });
+
+      return await getVideoDetailsFromYt(videoUrl);
     }
-  });
+
+    console.error(
+      `Proxy ${proxyIndex}. ${proxy.uri}:${proxy.port} failed with error:`,
+      error
+    );
+
+    if (socket) {
+      sendNotificationToUser(
+        socket,
+        "An error occurred!",
+        "Couldn't get video details!",
+        "destructive"
+      );
+    } else {
+      sendNotificationToAll(
+        "An error occurred!",
+        "Couldn't get video details!",
+        "destructive"
+      );
+    }
+  }
 };
 
 let isProcessing = false;
@@ -103,9 +119,13 @@ export const createHlsStream = async (url: string, videoId: string) => {
     const audioSegmentPath = `${mainDirectory}/song/${videoId}/audio.mp4`;
 
     console.log("Downloading segments...");
-    await downloadSegments(url, videoSegmentPath, audioSegmentPath);
+    await downloadSegment(url, videoId, videoSegmentPath, "video");
+    await downloadSegment(url, videoId, audioSegmentPath, "audio");
+
     console.log("Merging segments...");
     await mergeSegments(videoSegmentPath, audioSegmentPath, outputFilePath);
+
+    console.log("Converting to HLS stream...");
     await convertToHls(outputFilePath, videoId);
   } catch (error: any) {
     if (error.code === "EEXIST") {
@@ -123,19 +143,20 @@ export const createHlsStream = async (url: string, videoId: string) => {
   }
 };
 
-const downloadSegments = async (
-  url: string,
-  videoSegmentPath: string,
-  audioSegmentPath: string
-) => {
-  return await withProxy(async (): Promise<void> => {
-    try {
-      console.log("Getting info...");
-      console.log(`Using proxy id ${proxyIndex}. ${proxy.uri}`);
+const execPromise = util.promisify(exec);
 
+async function downloadSegment(
+  url: string,
+  videoId: string,
+  path: string,
+  segment?: "video" | "audio"
+): Promise<void> {
+  try {
+    let format = "140"; // audio in medium quality
+
+    if (segment === "video") {
       const info = await ytdl.getInfo(url, { agent });
 
-      // const videoItagPreferences = [136, 135, 134, 133]; // 720p and lower
       const videoItagPreferences = [135, 134, 133]; // 480p and lower
       let availableItags: number[] = [];
 
@@ -149,120 +170,36 @@ const downloadSegments = async (
         availableItags = [160];
       }
 
-      console.log("Getting video format...");
-
-      let videoFormat = null;
-      for (const itag of availableItags) {
-        videoFormat = ytdl.chooseFormat(info.formats, {
-          quality: itag,
-        });
-        if (videoFormat) {
-          break;
-        }
-      }
-
-      if (!videoFormat) {
-        throw new Error("No suitable video format found");
-      }
-
-      console.log("Getting audio format...");
-      const audioFormat = ytdl.chooseFormat(info.formats, {
-        quality: "highestaudio",
-      });
-      if (!audioFormat) {
-        throw new Error("Audio format not found");
-      }
-
-      const videoStream = ytdl(url, { format: videoFormat });
-      const audioStream = ytdl(url, { format: audioFormat });
-
-      console.log("Getting video...");
-      const videoPromise = await pipeline(
-        videoStream,
-        fs.createWriteStream(videoSegmentPath)
-      )
-        .catch(async (err: any) => {
-          if (
-            err instanceof Error &&
-            err.message.includes("Status code: 403")
-          ) {
-            console.log(`Switching proxy to number ${proxyIndex}`);
-
-            proxyIndex += 1;
-
-            proxy = proxyList[proxyIndex];
-            agent = ytdl.createProxyAgent(
-              { uri: `http://${proxy.uri}:${proxy.port}` },
-              cookies
-            );
-
-            await downloadSegments(url, videoSegmentPath, audioSegmentPath);
-          }
-          console.error("Error in video stream:", err);
-        })
-        .finally(() => {
-          console.log("Audio segment finished");
-        });
-
-      console.log("Getting audio...");
-      const audioPromise = await pipeline(
-        audioStream,
-        fs.createWriteStream(audioSegmentPath)
-      )
-        .catch(async (err: any) => {
-          if (
-            err instanceof Error &&
-            err.message.includes("Status code: 403")
-          ) {
-            console.log(`Switching proxy to number ${proxyIndex}`);
-
-            proxyIndex += 1;
-
-            proxy = proxyList[proxyIndex];
-            agent = ytdl.createProxyAgent(
-              { uri: `http://${proxy.uri}:${proxy.port}` },
-              cookies
-            );
-
-            await downloadSegments(url, videoSegmentPath, audioSegmentPath);
-          }
-          console.error("Error in audio stream:", err);
-        })
-        .finally(() => {
-          console.log("Audio segment finished");
-        });
-
-      await Promise.all([videoPromise, audioPromise]);
-
-      console.log("Both video and audio segments finished");
-    } catch (err: any) {
-      console.error("downloadSegments Error:", err.message);
+      format = availableItags[0].toString();
     }
-  });
-};
 
-async function withProxy<T>(callback: () => Promise<T>): Promise<T> {
-  try {
-    return await callback();
-  } catch (error: any) {
-    if (
-      error instanceof Error &&
-      (error.message.includes("Sign in to confirm you're not a bot") ||
-        error.message.includes("MinigetError: Status code: 403"))
-    ) {
-      console.log(`Switching proxy to number ${proxyIndex}`);
+    let command = `yt-dlp -f ${format} ${videoId} \
+     --proxy socks5://${proxyAuth.username}:${proxyAuth.password}@${proxy.uri}:${proxy.port} \
+     -o ${path}`;
+
+    console.log(`Executing command: ${command}`);
+
+    const { stdout, stderr } = await execPromise(command);
+
+    console.log("Command output:", stdout);
+    if (stderr) {
+      console.error("Command error output:", stderr);
+    }
+  } catch (error) {
+    const errorMessage = (error as Error).message;
+
+    if (errorMessage.includes("bot") || errorMessage.includes("403")) {
+      console.error("Changing proxy...");
 
       proxyIndex += 1;
-
       proxy = proxyList[proxyIndex];
       agent = ytdl.createProxyAgent({
         uri: `http://${proxy.uri}:${proxy.port}`,
       });
 
-      return await callback();
+      await downloadSegment(url, videoId, path, segment);
     } else {
-      console.error("withProxy", error);
-      throw error;
+      console.error("An error occurred:", errorMessage);
     }
   }
 }
