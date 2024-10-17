@@ -43,10 +43,10 @@ export const convertToHls = async (videoPath: string, videoId?: string) => {
       .outputOptions([
         "-profile:v baseline",
         "-preset veryfast",
-        "-crf 28",
+        "-crf 30",
         "-level 3.0",
         "-start_number 0",
-        "-hls_time 4",
+        "-hls_time 6",
         "-hls_list_size 0",
         "-f hls",
       ])
