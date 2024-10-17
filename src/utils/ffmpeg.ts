@@ -38,7 +38,6 @@ export async function mergeSegments(
 
 export const convertToHls = async (videoPath: string, videoId?: string) => {
   await new Promise<void>(async (resolve, reject) => {
-    console.log("Converting to HLS...");
     ffmpeg()
       .input(videoPath)
       .outputOptions([
