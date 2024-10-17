@@ -119,8 +119,10 @@ export const createHlsStream = async (url: string, videoId: string) => {
     const audioSegmentPath = `${mainDirectory}/song/${videoId}/audio.mp4`;
 
     console.log("Downloading segments...");
-    await downloadSegment(url, videoId, videoSegmentPath, "video");
-    await downloadSegment(url, videoId, audioSegmentPath, "audio");
+    await Promise.all([
+      downloadSegment(url, videoId, videoSegmentPath, "video"),
+      downloadSegment(url, videoId, audioSegmentPath, "audio"),
+    ]);
 
     console.log("Merging segments...");
     await mergeSegments(videoSegmentPath, audioSegmentPath, outputFilePath);
