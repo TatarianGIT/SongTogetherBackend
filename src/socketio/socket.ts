@@ -54,6 +54,8 @@ let fullFilePath: string = "";
 let isQueueRunning: boolean = false;
 let currentTimestamp = 0;
 
+let isDownloading: boolean = false;
+
 let nextSongHlsPromise: Promise<void> | null = null;
 
 const configureSocketIO = (httpsServer: HttpsServer) => {
@@ -182,6 +184,15 @@ const configureSocketIO = (httpsServer: HttpsServer) => {
         return;
       } catch (error) {
         console.error("socket requestFile", error);
+      }
+    });
+
+    // Sending isDownloading state
+    socket.on("getIsDownloading", () => {
+      try {
+        io.emit("updateDownloadingState", isDownloading);
+      } catch (error) {
+        console.error("socket getIsDownloading", error);
       }
     });
 
@@ -370,9 +381,11 @@ const startQueue = async (): Promise<void> => {
 
   // create stream of current song if stream doesn't exist
   if (!directories?.includes(currentSong.videoId) && !filteredFiles) {
-    io.emit("updateDownloadingState", true);
+    isDownloading = true;
+    io.emit("updateDownloadingState", isDownloading);
     await createHlsStream(currentSong.videoUrl, currentSong.videoId);
-    io.emit("updateDownloadingState", false);
+    isDownloading = false;
+    io.emit("updateDownloadingState", isDownloading);
   }
 
   // get .m3u8 file
