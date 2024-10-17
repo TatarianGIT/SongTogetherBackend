@@ -451,7 +451,7 @@ const handleNextSong = async (currentSongId: string) => {
 
     if (prevQueue && currentSong) {
       prevQueue.unshift(currentSong);
-      if (prevQueue.length >= 30) {
+      if (prevQueue.length > 30) {
         prevQueue.pop();
       }
     } else if (currentSong) {
