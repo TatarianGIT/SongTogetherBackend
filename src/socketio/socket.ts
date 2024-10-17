@@ -45,7 +45,7 @@ let io: Server;
 
 let userList: SocketUser[] = [];
 
-let prevQueue: SongQueue = await getQueue({ queueType: "prev", limit: 20 });
+let prevQueue: SongQueue = await getQueue({ queueType: "prev", limit: 30 });
 let nextQueue: SongQueue = await getQueue({ queueType: "next" });
 let currentSong: CurrentSong = await getCurrentSong();
 
@@ -117,6 +117,16 @@ const configureSocketIO = (httpsServer: HttpsServer) => {
     // Adding new song
     socket.on("addSong", async (body: { videoUrl: string }) => {
       try {
+        if (nextQueue && nextQueue.length >= 15) {
+          await sendNotificationToUser(
+            socket,
+            "Queue is full!",
+            "Sorry, only 15 songs are allowed in the queue.",
+            "destructive"
+          );
+          return;
+        }
+
         const videoDetails = await getVideoDetailsFromYt(body.videoUrl, socket);
         if (!videoDetails) return;
 
@@ -441,6 +451,9 @@ const handleNextSong = async (currentSongId: string) => {
 
     if (prevQueue && currentSong) {
       prevQueue.unshift(currentSong);
+      if (prevQueue.length >= 30) {
+        prevQueue.pop();
+      }
     } else if (currentSong) {
       prevQueue = [currentSong];
     }
