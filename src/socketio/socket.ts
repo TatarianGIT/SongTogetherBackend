@@ -91,12 +91,13 @@ const configureSocketIO = (httpsServer: HttpsServer) => {
   io.on("connection", async (socket) => {
     const userData: DatabaseUser = socket.data.userData;
 
-    const { discord_id, avatar, banner_color, global_name, id } = userData;
+    const { discord_id, avatar, banner_color, global_name, id, username } =
+      userData;
     const user: SocketUser = {
       discord_id,
       avatar,
       banner_color,
-      global_name,
+      global_name: global_name ?? username,
       id,
     };
 

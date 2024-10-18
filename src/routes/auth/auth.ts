@@ -71,6 +71,8 @@ AuthRoute.get("/discord/callback", async (req, res) => {
 
     const generatedUserId = generateId(15);
 
+    const globalName = discordUser.global_name ?? discordUser.username;
+
     db.prepare(
       "INSERT INTO user \
       (id, discord_id, username, avatar, accent_color, global_name, banner_color, email) \
@@ -82,7 +84,7 @@ AuthRoute.get("/discord/callback", async (req, res) => {
       discordUser.avatar,
       discordUser.accent_color,
       discordUser.global_name,
-      discordUser.banner_color,
+      globalName,
       discordUser.email
     );
 
