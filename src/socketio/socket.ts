@@ -78,7 +78,11 @@ const configureSocketIO = (httpsServer: HttpsServer) => {
 
       if (sessionId) {
         const user: DatabaseUser | null = await getUserFromSession(sessionId);
+
         if (user) {
+          if (user.role === null) {
+            return;
+          }
           socket.data.userData = user;
           return next();
         }
