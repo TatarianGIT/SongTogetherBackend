@@ -7,7 +7,7 @@ import { db } from "../../sqlite3/db.js";
 import dotenv from "dotenv";
 
 import type { DatabaseUser, DiscordUser } from "../../types/index.js";
-import { isAuthenticated } from "../../middleware/isAuthenticated.js";
+import { isAuthenticated } from "../../middleware/auth.js";
 import { getUserFromSession } from "../../sqlite3/userServieces.js";
 
 dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
@@ -75,8 +75,8 @@ AuthRoute.get("/discord/callback", async (req, res) => {
 
     db.prepare(
       "INSERT INTO user \
-      (id, discord_id, username, avatar, accent_color, global_name, banner_color, email) \
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
+      (id, discord_id, username, avatar, accent_color, global_name, banner_color, email, role) \
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
     ).run(
       generatedUserId,
       discordUser.id,
@@ -85,7 +85,10 @@ AuthRoute.get("/discord/callback", async (req, res) => {
       discordUser.accent_color,
       discordUser.global_name,
       globalName,
-      discordUser.email
+      discordUser.email,
+      discordUser.username === process.env.OWNER_DISCORD_USERNAME
+        ? "admin"
+        : null
     );
 
     const session = await lucia.createSession(generatedUserId, {});

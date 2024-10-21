@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import { AuthRoute } from "./auth/auth.js";
-import { isAuthenticated } from "../middleware/isAuthenticated.js";
+import { isAuthenticated } from "../middleware/auth.js";
 import SongRoute from "./song.js";
 import SessionRoute from "./auth/session.js";
 import fs from "fs";
