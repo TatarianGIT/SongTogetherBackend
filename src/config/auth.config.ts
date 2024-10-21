@@ -23,6 +23,7 @@ export const lucia = new Lucia(adapter, {
     return {
       discordId: attributes.discord_id,
       username: attributes.username,
+      role: attributes.role,
     };
   },
 });
