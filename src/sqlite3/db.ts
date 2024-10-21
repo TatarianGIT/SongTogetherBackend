@@ -11,7 +11,8 @@ db.exec(`CREATE TABLE IF NOT EXISTS user (
     accent_color INTEGER,
     global_name TEXT,
     banner_color TEXT,
-    email TEXT UNIQUE
+    email TEXT UNIQUE,
+    role TEXT DEFAULT null CHECK (role IN (null, 'basic', 'moderator', 'admin'))
 )`);
 
 db.exec(`CREATE TABLE IF NOT EXISTS session (
