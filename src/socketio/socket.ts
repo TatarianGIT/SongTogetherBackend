@@ -115,6 +115,14 @@ const configureSocketIO = (httpsServer: HttpsServer) => {
       role,
     };
 
+    if (
+      !hasRequiredRole({
+        userRole: user.role,
+        requiredRole: ["basic", "moderator", "admin"],
+      })
+    )
+      return;
+
     userList = await addUserToList(user, userList);
     io.emit("updateUserList", userList);
 
