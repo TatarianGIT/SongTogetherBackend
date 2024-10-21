@@ -20,3 +20,14 @@ export const getUserFromSession = async (sessionId: string) => {
 
   return null;
 };
+
+export const getAllUsers = async () => {
+  const allUsers = db
+    .prepare("SELECT username, global_name, role, avatar, discord_id FROM user")
+    .all();
+
+  if (!allUsers) return undefined;
+
+  return allUsers;
+};
+
