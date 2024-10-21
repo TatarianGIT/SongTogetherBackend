@@ -47,6 +47,7 @@ export type SocketUser = {
   id: string;
   discord_id: string;
   avatar: string;
+  username: string;
   global_name: string;
   banner_color: string;
   role: AuthRole;
