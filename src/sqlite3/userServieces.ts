@@ -6,7 +6,7 @@ export const getUserFromSession = async (sessionId: string) => {
     .prepare(
       "\
         SELECT  user.id, user.discord_id, user.username, user.avatar, user.accent_color, \
-                user.global_name, user.banner_color, user.email\
+                user.global_name, user.banner_color, user.email, user.role\
         FROM user \
         JOIN session ON user.id = session.user_id \
         WHERE session.id = ? \
