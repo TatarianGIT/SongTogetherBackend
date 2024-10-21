@@ -1,3 +1,5 @@
+export type AuthRole = null | "basic" | "moderator" | "admin";
+
 export type DiscordUser = {
   id: string;
   username: string;
@@ -17,6 +19,7 @@ export type DatabaseUser = {
   global_name: string;
   banner_color: string;
   email: string;
+  role: AuthRole;
 };
 
 export type DatabaseVideo = {
@@ -46,6 +49,7 @@ export type SocketUser = {
   avatar: string;
   global_name: string;
   banner_color: string;
+  role: AuthRole;
 };
 
 export type VideoDetails = {
