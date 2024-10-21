@@ -123,6 +123,8 @@ const configureSocketIO = (httpsServer: HttpsServer) => {
     )
       return;
 
+    socket.join("mainRoom");
+
     userList = await addUserToList(user, userList);
     io.emit("updateUserList", userList);
 
