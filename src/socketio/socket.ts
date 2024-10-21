@@ -95,14 +95,24 @@ const configureSocketIO = (httpsServer: HttpsServer) => {
   io.on("connection", async (socket) => {
     const userData: DatabaseUser = socket.data.userData;
 
-    const { discord_id, avatar, banner_color, global_name, id, username } =
-      userData;
+    const {
+      discord_id,
+      avatar,
+      banner_color,
+      global_name,
+      id,
+      username,
+      role,
+    } = userData;
+
     const user: SocketUser = {
       discord_id,
       avatar,
       banner_color,
+      username,
       global_name: global_name ?? username,
       id,
+      role,
     };
 
     userList = await addUserToList(user, userList);
