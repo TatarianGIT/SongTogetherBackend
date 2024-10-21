@@ -1,6 +1,7 @@
 import { Server } from "socket.io";
 import { Server as HttpsServer } from "https";
 import type {
+  AuthRole,
   CurrentSong,
   DatabaseUser,
   NewVideo,
@@ -11,6 +12,7 @@ import type {
 import {
   addUserToList,
   removeUserFromList,
+  sendNotificationToAll,
   sendNotificationToUser,
 } from "./helpers.js";
 import { createHlsStream, getVideoDetailsFromYt } from "../utils/ytdl.js";
@@ -21,7 +23,12 @@ import {
   isVideoSupported,
   listDirectories,
 } from "../utils/helpers.js";
-import { getUserFromSession } from "../sqlite3/userServieces.js";
+import {
+  getAllUsers,
+  getUser,
+  getUserFromSession,
+  updateUserRole,
+} from "../sqlite3/userServieces.js";
 import dotenv from "dotenv";
 import {
   addVideo,
@@ -38,6 +45,7 @@ import {
   removeFromFavourites,
 } from "../sqlite3/favouriteServieces.js";
 import { mainDirectory } from "../envVars.js";
+import { hasRequiredRole } from "../middleware/auth.js";
 
 dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
@@ -359,6 +367,58 @@ const configureSocketIO = (httpsServer: HttpsServer) => {
       socket.emit("updateAllUsers", allUsers);
     });
 
+    socket.on("updateUserRole", async (username: string, role: AuthRole) => {
+      if (!hasRequiredRole({ userRole: user.role, requiredRole: ["admin"] }))
+        return;
+
+      if (username === user.username) {
+        sendNotificationToUser(
+          socket,
+          "Whoops!",
+          "You can't change your role",
+          "destructive"
+        );
+        return;
+      }
+      if (username === process.env.OWNER_DISCORD_USERNAME) {
+        return;
+      }
+
+      const singleUser: DatabaseUser = await getUser({ username });
+
+      if (!singleUser) {
+        sendNotificationToUser(
+          socket,
+          "No user found!",
+          `User ${username} was not found in database.`,
+          "destructive"
+        );
+        return;
+      }
+
+      const result = await updateUserRole(username, role);
+
+      if (result?.changes === 0)
+        sendNotificationToUser(
+          socket,
+          "Nothing happend!",
+          "User's role wasn't updated",
+          "destructive"
+        );
+
+      sendNotificationToAll(
+        "Success!",
+        `User ${username} just received the ${
+          role === null ? "none" : role
+        } role.`,
+        "default"
+      );
+
+      const allUsers = await getAllUsers();
+      socket.emit("updateAllUsers", allUsers);
+
+      socket.to("mainRoom").to(singleUser.discord_id).emit("updateUser");
+    });
   });
 };
 
