@@ -1,4 +1,5 @@
 import { NextFunction, Response, Request } from "express";
+import { AuthRole } from "../types/index.js";
 
 export const isAuthenticated = (
   req: Request,
@@ -10,3 +11,4 @@ export const isAuthenticated = (
   }
   next();
 };
+
