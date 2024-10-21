@@ -12,3 +12,12 @@ export const isAuthenticated = (
   next();
 };
 
+export const hasRequiredRole = async ({
+  userRole,
+  requiredRole,
+}: {
+  userRole: AuthRole;
+  requiredRole: Exclude<AuthRole[], null>;
+}): Promise<boolean> => {
+  return requiredRole.includes(userRole);
+};
