@@ -349,6 +349,16 @@ const configureSocketIO = (httpsServer: HttpsServer) => {
         console.error("socket getNextQueue", error);
       }
     });
+
+    socket.on("getAllUsers", async () => {
+      if (!hasRequiredRole({ userRole: user.role, requiredRole: ["admin"] }))
+        return;
+
+      const allUsers = await getAllUsers();
+
+      socket.emit("updateAllUsers", allUsers);
+    });
+
   });
 };
 
