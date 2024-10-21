@@ -1,4 +1,4 @@
-import { DatabaseUser } from "../types/index.js";
+import { AuthRole, DatabaseUser } from "../types/index.js";
 import { db } from "./db.js";
 
 export const getUserFromSession = async (sessionId: string) => {
@@ -58,3 +58,17 @@ export const getUser = async ({
   return user as DatabaseUser;
 };
 
+export const updateUserRole = async (username: string, role: AuthRole) => {
+  const user = await getUser({ username });
+
+  if (!user) {
+    console.log("No user found", username);
+    return;
+  }
+
+  const result = db
+    .prepare("UPDATE user SET role = ? WHERE username = ?")
+    .run(role, username);
+
+  return result;
+};
