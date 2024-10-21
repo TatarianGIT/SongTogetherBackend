@@ -31,3 +31,30 @@ export const getAllUsers = async () => {
   return allUsers;
 };
 
+export const getUser = async ({
+  username,
+  discordId,
+}: {
+  username?: string;
+  discordId?: string;
+}) => {
+  if (!username && !discordId)
+    throw new Error("Username or discordId must be provided.");
+
+  let query = "SELECT * FROM user WHERE ";
+  let params: string[] = [];
+  if (username) {
+    query += "username = ? ";
+    params.push(username);
+  }
+  if (discordId) {
+    query += "discord_id = ? ";
+    params.push(discordId);
+  }
+  query += ";";
+
+  const user = db.prepare(query).get(...params);
+
+  return user as DatabaseUser;
+};
+
