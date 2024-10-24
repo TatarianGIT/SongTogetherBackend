@@ -175,9 +175,9 @@ async function downloadSegment(
       format = availableItags[0].toString();
     }
 
-    let command = `yt-dlp -f ${format} ${videoId} \
+    let command = `yt-dlp -f ${format} '${videoId}' \
      --proxy socks5://${proxyAuth.username}:${proxyAuth.password}@${proxy.uri}:${proxy.port} \
-     -o ${path}`;
+     -o '${path}'`;
 
     console.log(`Executing command: ${command}`);
 
