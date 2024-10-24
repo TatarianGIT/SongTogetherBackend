@@ -355,65 +355,85 @@ const configureSocketIO = (httpsServer: HttpsServer) => {
     });
 
     socket.on("getAllUsers", async () => {
-      if (!hasRequiredRole({ userRole: user.role, requiredRole: ["admin"] }))
-        return;
+      try {
+        if (
+          !(await hasRequiredRole({
+            userRole: user.role,
+            requiredRole: ["admin"],
+          }))
+        )
+          return;
 
-      const allUsers = await getAllUsers();
+        const allUsers = await getAllUsers();
 
-      socket.emit("updateAllUsers", allUsers);
+        socket.emit("updateAllUsers", allUsers);
+      } catch (error) {
+        console.error("socket getAllUsers", error);
+      }
     });
 
     socket.on("updateUserRole", async (username: string, role: AuthRole) => {
-      if (!hasRequiredRole({ userRole: user.role, requiredRole: ["admin"] }))
-        return;
+      try {
+        if (
+          !(await hasRequiredRole({
+            userRole: user.role,
+            requiredRole: ["admin"],
+          }))
+        )
+          return;
 
-      if (username === user.username) {
-        sendNotificationToUser(
-          socket,
-          "Whoops!",
-          "You can't change your role",
-          "destructive"
+        if (username === user.username) {
+          sendNotificationToUser(
+            socket,
+            "Whoops!",
+            "You can't change your role",
+            "destructive"
+          );
+          return;
+        }
+        if (username === process.env.OWNER_DISCORD_USERNAME) {
+          return;
+        }
+
+        const singleUser: DatabaseUser = await getUser({ username });
+
+        if (!singleUser) {
+          sendNotificationToUser(
+            socket,
+            "No user found!",
+            `User ${username} was not found in database.`,
+            "destructive"
+          );
+          return;
+        }
+
+        const result = await updateUserRole(username, role);
+
+        if (result?.changes === 0)
+          sendNotificationToUser(
+            socket,
+            "Nothing happend!",
+            "User's role wasn't updated",
+            "destructive"
+          );
+
+        sendNotificationToAll(
+          "Success!",
+          `User ${username} just received the ${
+            role === null ? "none" : role
+          } role.`,
+          "default"
         );
-        return;
+
+        const allUsers = await getAllUsers();
+        socket.emit("updateAllUsers", allUsers);
+
+        socket.to("mainRoom").to(singleUser.discord_id).emit("updateUser");
+      } catch (error) {
+        console.log("socket updateUserRole", error);
       }
-      if (username === process.env.OWNER_DISCORD_USERNAME) {
-        return;
-      }
+    });
 
-      const singleUser: DatabaseUser = await getUser({ username });
-
-      if (!singleUser) {
-        sendNotificationToUser(
-          socket,
-          "No user found!",
-          `User ${username} was not found in database.`,
-          "destructive"
-        );
-        return;
-      }
-
-      const result = await updateUserRole(username, role);
-
-      if (result?.changes === 0)
-        sendNotificationToUser(
-          socket,
-          "Nothing happend!",
-          "User's role wasn't updated",
-          "destructive"
-        );
-
-      sendNotificationToAll(
-        "Success!",
-        `User ${username} just received the ${
-          role === null ? "none" : role
-        } role.`,
-        "default"
-      );
-
-      const allUsers = await getAllUsers();
-      socket.emit("updateAllUsers", allUsers);
-
-      socket.to("mainRoom").to(singleUser.discord_id).emit("updateUser");
     });
   });
 };
