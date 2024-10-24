@@ -159,7 +159,7 @@ export const isVideoSupported = async (
     sendNotificationToUser(
       socket,
       "An error occurred!",
-      "Video is too long, maximum allowed length is 30 minutes!",
+      "Video is too long, maximum allowed length is 30 minutes.",
       "destructive"
     );
     return false;
