@@ -4,6 +4,7 @@ import { Socket } from "socket.io";
 import { sendNotificationToUser } from "../socketio/helpers.js";
 import { bannedWords, maxVideoDuration } from "./ytdl.js";
 import { mainDirectory } from "../envVars.js";
+import { SongQueue } from "../types/index.js";
 
 export async function deleteDirectoryWithContent({
   directoryPath,
@@ -104,6 +105,19 @@ export const isVideoTooLong = (
   return videoLength > maxVideoLength;
 };
 
+export const isAlreadyInQueue = async (
+  videoTitle: string,
+  nextQueue: SongQueue
+): Promise<boolean> => {
+  if (!nextQueue) return false;
+
+  if (nextQueue.some((song) => song.title === videoTitle)) {
+    return true;
+  }
+
+  return false;
+};
+
 type getVideoDetails = {
   videoUrl: string;
   videoId: string;
@@ -113,10 +127,11 @@ type getVideoDetails = {
   isLive: boolean | undefined;
 };
 
-export const isVideoSupported = (
+export const isVideoSupported = async (
   videoDetails: getVideoDetails,
+  nextQueue: SongQueue,
   socket: Socket
-): boolean => {
+): Promise<boolean> => {
   if (videoDetails.isLive) {
     console.log("Livestream cannot be added");
     sendNotificationToUser(
@@ -128,7 +143,18 @@ export const isVideoSupported = (
     return false;
   }
 
-  if (isVideoTooLong(videoDetails.lengthSeconds, maxVideoDuration)) {
+  if (await isAlreadyInQueue(videoDetails.title, nextQueue)) {
+    console.log("Video already in the queue!", videoDetails.title);
+    sendNotificationToUser(
+      socket,
+      "Already in queue!",
+      "Video exists in next queue.",
+      "destructive"
+    );
+    return false;
+  }
+
+  if (await isVideoTooLong(videoDetails.lengthSeconds, maxVideoDuration)) {
     console.log("Video is too long!", videoDetails.lengthSeconds);
     sendNotificationToUser(
       socket,

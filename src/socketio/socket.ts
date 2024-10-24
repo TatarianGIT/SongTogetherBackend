@@ -163,7 +163,7 @@ const configureSocketIO = (httpsServer: HttpsServer) => {
         const videoDetails = await getVideoDetailsFromYt(body.videoUrl, socket);
         if (!videoDetails) return;
 
-        if (!isVideoSupported(videoDetails, socket)) return;
+        if (!(await isVideoSupported(videoDetails, nextQueue, socket))) return;
 
         const newVideo: NewVideo = {
           ...videoDetails,
