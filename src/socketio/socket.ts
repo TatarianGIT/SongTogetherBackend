@@ -194,7 +194,7 @@ const configureSocketIO = (httpsServer: HttpsServer) => {
               io.emit("updateNextQueue", nextQueue);
             }
 
-            if (nextQueue?.length === 1) {
+            if (nextQueue && nextQueue[0]) {
               let directories = await listDirectories(`${mainDirectory}/song`);
               let filteredFiles = await findFilesWithExtension(
                 `${mainDirectory}/song/${nextQueue[0].videoId}`,
@@ -510,7 +510,7 @@ const startQueue = async (): Promise<void> => {
   }
 
   // if there is next song, create hls stream
-  if (nextSong && nextQueue && nextQueue.length > 0) {
+  if (nextSong && nextQueue && nextQueue[0]) {
     nextSongHlsPromise = createHlsStream(
       nextQueue[0].videoUrl,
       nextQueue[0].videoId
