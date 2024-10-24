@@ -11,9 +11,12 @@ import type {
 } from "../types/index.js";
 import {
   addUserToList,
+  isUserOnSkipList,
+  removeFromSkipList,
   removeUserFromList,
   sendNotificationToAll,
   sendNotificationToUser,
+  updateSkipThreshold,
 } from "./helpers.js";
 import { createHlsStream, getVideoDetailsFromYt } from "../utils/ytdl.js";
 import {
@@ -52,6 +55,11 @@ dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 let io: Server;
 
 let userList: SocketUser[] = [];
+
+let skipCount: number = 0;
+let skipList: SocketUser[] = [];
+let skipThreshold: number = 0;
+let toSkip: boolean = false;
 
 let prevQueue: SongQueue = await getQueue({ queueType: "prev", limit: 30 });
 let nextQueue: SongQueue = await getQueue({ queueType: "next" });
@@ -136,15 +144,33 @@ const configureSocketIO = (httpsServer: HttpsServer) => {
     userList = await addUserToList(user, userList);
     io.emit("updateUserList", userList);
 
+    skipCount = skipList.length;
+    skipThreshold = updateSkipThreshold(userList);
+    io.emit("updateSkipThreshold", skipThreshold);
+
     mainFunction();
 
     socket.on("getUserList", async () => {
-      io.emit("updateUserList", userList);
+      try {
+        io.emit("updateUserList", userList);
+      } catch (error) {
+        console.error("socket getUserList", error);
+      }
     });
 
     socket.on("disconnect", async () => {
-      userList = await removeUserFromList(user, userList);
-      io.emit("updateUserList", userList);
+      try {
+        userList = await removeUserFromList(user, userList);
+        io.emit("updateUserList", userList);
+
+        skipList = removeFromSkipList(user, skipList);
+        skipThreshold = updateSkipThreshold(userList);
+        skipCount = skipList.length;
+        io.emit("updateSkipThreshold", skipThreshold);
+        io.emit("updateSkipCount", skipCount);
+      } catch (error) {
+        console.error("socket disconnect", error);
+      }
     });
 
     // Adding new song
@@ -434,6 +460,68 @@ const configureSocketIO = (httpsServer: HttpsServer) => {
       }
     });
 
+    socket.on("getSkipCount", async () => {
+      try {
+        socket.emit("updateSkipCount", skipCount);
+      } catch (error) {
+        console.log("socket getSkipCount", error);
+      }
+    });
+
+    socket.on("getSkipThreshold", async () => {
+      try {
+        skipThreshold = updateSkipThreshold(userList);
+
+        io.emit("updateSkipThreshold", skipThreshold);
+      } catch (error) {
+        console.log("socket getSkipThreshold", error);
+      }
+    });
+
+    socket.on("handleSkip", async () => {
+      try {
+        if (isUserOnSkipList(user, skipList)) {
+          sendNotificationToUser(
+            socket,
+            "Vote skip failed!",
+            "You have already voted to skip this song.",
+            "destructive"
+          );
+          return;
+        }
+
+        sendNotificationToUser(
+          socket,
+          "Success!",
+          "You voted to skip the song..",
+          "default"
+        );
+
+        skipList.push(user);
+        skipCount = skipList.length;
+        skipThreshold = updateSkipThreshold(userList);
+
+        io.emit("updateSkipCount", skipCount);
+        io.emit("updateSkipThreshold", skipThreshold);
+
+        if (skipCount === skipThreshold) {
+          sendNotificationToAll(
+            "Skipped!",
+            `Song: ${currentSong?.title} has just been skipped.`,
+            "default"
+          );
+
+          skipCount = 0;
+          skipList = [];
+          skipThreshold = updateSkipThreshold(userList);
+
+          toSkip = true;
+        }
+
+        return;
+      } catch (error) {
+        console.log("socket handleSkip", error);
+      }
     });
   });
 };
@@ -460,6 +548,7 @@ const startQueue = async (): Promise<void> => {
     return;
   }
 
+  toSkip = false;
   fullFilePath = "";
 
   const currentSongInDb = await getCurrentSong();
@@ -489,8 +578,12 @@ const startQueue = async (): Promise<void> => {
 
   // wait if hls creation of next video is pending
   if (nextSongHlsPromise) {
+    isDownloading = true;
+    io.emit("updateDownloadingState", isDownloading);
     console.log("Waiting for next song HLS stream creation to complete...");
     await nextSongHlsPromise;
+    isDownloading = false;
+    io.emit("updateDownloadingState", isDownloading);
   }
 
   // get all directories and current song's .m3u8 file
@@ -524,6 +617,12 @@ const startQueue = async (): Promise<void> => {
     fullFilePath = `https://${process.env.HOST_URL}:${process.env.PORT}${streamPath}`;
     io.emit("updateStreamPath", fullFilePath);
   }
+
+  skipCount = skipList.length;
+  skipThreshold = updateSkipThreshold(userList);
+
+  io.emit("updateSkipCount", skipCount);
+  io.emit("updateSkipThreshold", skipThreshold);
 
   // if there is next song, create hls stream
   if (nextSong && nextQueue && nextQueue[0]) {
@@ -598,7 +697,7 @@ const songInterval = async (length: number) => {
       currentTimestamp = 0;
       const intervalId = setInterval(() => {
         currentTimestamp += 1;
-        if (currentTimestamp === length) {
+        if (currentTimestamp === length || toSkip === true) {
           clearInterval(intervalId);
           currentTimestamp = 0;
           return resolve();
