@@ -311,7 +311,7 @@ const configureSocketIO = (httpsServer: HttpsServer) => {
           return;
         }
       } catch (error) {
-        console.error("socket getNextQueue", error);
+        console.error("socket addToFavs", error);
       }
     });
 
@@ -350,7 +350,7 @@ const configureSocketIO = (httpsServer: HttpsServer) => {
 
         return;
       } catch (error) {
-        console.error("socket getNextQueue", error);
+        console.error("socket removeFromFavs", error);
       }
     });
 
