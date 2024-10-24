@@ -278,9 +278,7 @@ const configureSocketIO = (httpsServer: HttpsServer) => {
     // Adding song to user's favs
     socket.on("addToFavs", async (videoId) => {
       try {
-        const isAlreadyFav = await isAlreadyFavourite(videoId, user.id);
-
-        if (isAlreadyFav) {
+        if (await isAlreadyFavourite(videoId, user.id)) {
           sendNotificationToUser(
             socket,
             "Woops!",
@@ -320,9 +318,7 @@ const configureSocketIO = (httpsServer: HttpsServer) => {
     // Removing song from user's favs
     socket.on("removeFromFavs", async (videoId: string) => {
       try {
-        const isAlreadyFav = await isAlreadyFavourite(videoId, user.id);
-
-        if (!isAlreadyFav) {
+        if (!(await isAlreadyFavourite(videoId, user.id))) {
           sendNotificationToUser(
             socket,
             "Woops!",
