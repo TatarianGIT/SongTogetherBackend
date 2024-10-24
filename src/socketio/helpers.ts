@@ -67,3 +67,26 @@ export const sendNotificationToAll = (
 ) => {
   io.emit("toastNotification", title, description, type);
 };
+
+export const updateSkipThreshold = (skipList: SocketUser[]): number => {
+  return Math.ceil(skipList.length / 2);
+};
+
+export const isUserOnSkipList = (
+  newUser: SocketUser,
+  skipList: SocketUser[]
+): boolean => {
+  return skipList.some((user) => user.id === newUser.id);
+};
+
+export const removeFromSkipList = (
+  userToRemove: SocketUser,
+  skipList: SocketUser[]
+) => {
+  if (isUserOnSkipList(userToRemove, skipList)) {
+    const newSkipList = skipList.filter((user) => user.id !== userToRemove.id);
+    return newSkipList;
+  }
+
+  return skipList;
+};
