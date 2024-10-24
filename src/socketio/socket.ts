@@ -150,11 +150,11 @@ const configureSocketIO = (httpsServer: HttpsServer) => {
     // Adding new song
     socket.on("addSong", async (body: { videoUrl: string }) => {
       try {
-        if (nextQueue && nextQueue.length >= 15) {
+        if (nextQueue && nextQueue.length >= 20) {
           await sendNotificationToUser(
             socket,
             "Queue is full!",
-            "Sorry, only 15 songs are allowed in the queue.",
+            "Sorry, only 20 songs are allowed in the queue.",
             "destructive"
           );
           return;
