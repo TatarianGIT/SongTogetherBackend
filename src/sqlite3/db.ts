@@ -44,3 +44,10 @@ db.exec(`CREATE TABLE IF NOT EXISTS favourite (
     user_id TEXT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES user(id)
 )`);
+
+db.exec(`
+    CREATE TABLE IF NOT EXISTS songLimit (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      limit_value INTEGER NOT NULL
+    );
+  `);
