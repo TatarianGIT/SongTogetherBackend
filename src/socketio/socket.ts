@@ -49,6 +49,11 @@ import {
 } from "../sqlite3/favouriteServieces.js";
 import { mainDirectory } from "../envVars.js";
 import { hasRequiredRole } from "../middleware/auth.js";
+import {
+  changeSongLimit,
+  getSongLimit,
+  insertDefaultLimit,
+} from "../sqlite3/songLimitServieces.js";
 
 dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
@@ -64,6 +69,8 @@ let toSkip: boolean = false;
 let prevQueue: SongQueue = await getQueue({ queueType: "prev", limit: 30 });
 let nextQueue: SongQueue = await getQueue({ queueType: "next" });
 let currentSong: CurrentSong = await getCurrentSong();
+
+let nextQueueLimit = await getSongLimit();
 
 let fullFilePath: string = "";
 
@@ -176,11 +183,15 @@ const configureSocketIO = (httpsServer: HttpsServer) => {
     // Adding new song
     socket.on("addSong", async (body: { videoUrl: string }) => {
       try {
-        if (nextQueue && nextQueue.length >= 20) {
+        if (
+          nextQueue &&
+          nextQueueLimit !== null &&
+          nextQueue.length >= nextQueueLimit
+        ) {
           await sendNotificationToUser(
             socket,
             "Queue is full!",
-            "Sorry, only 20 songs are allowed in the queue.",
+            `Sorry, only ${nextQueueLimit} songs are allowed in the queue.`,
             "destructive"
           );
           return;
@@ -521,6 +532,63 @@ const configureSocketIO = (httpsServer: HttpsServer) => {
         return;
       } catch (error) {
         console.log("socket handleSkip", error);
+      }
+    });
+
+    socket.on("getSongLimit", async () => {
+      try {
+        const limit = await getSongLimit();
+
+        socket.emit("updateSongLimit", limit);
+      } catch (error) {
+        console.log("socket getSongLimit");
+      }
+    });
+
+    socket.on("setNewLimit", async (newLimit: number) => {
+      try {
+        if (newLimit < 0 || newLimit > 100)
+          return sendNotificationToUser(
+            socket,
+            "Wrong limit value!",
+            "Limit shuld be in range of 0 to 100.",
+            "destructive"
+          );
+
+        const limit = await getSongLimit();
+
+        if (limit === newLimit) {
+          sendNotificationToUser(
+            socket,
+            "Error!",
+            "Limit must be different from the current one.",
+            "destructive"
+          );
+        }
+
+        const info = await changeSongLimit(newLimit);
+
+        if (info && info.changes === 1) {
+          nextQueueLimit = newLimit;
+
+          sendNotificationToUser(
+            socket,
+            "Success!",
+            `Limit is now ${newLimit}`,
+            "default"
+          );
+        } else {
+          sendNotificationToUser(
+            socket,
+            "Error!",
+            "Unexprected error occurred while changing song limit",
+            "destructive"
+          );
+        }
+
+        return io.emit("updateSongLimit", newLimit);
+      } catch (error) {
+        console.log("socket setNewLimit");
       }
     });
   });
