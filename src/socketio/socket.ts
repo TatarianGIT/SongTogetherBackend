@@ -547,6 +547,14 @@ const configureSocketIO = (httpsServer: HttpsServer) => {
 
     socket.on("setNewLimit", async (newLimit: number) => {
       try {
+        if (
+          !(await hasRequiredRole({
+            userRole: user.role,
+            requiredRole: ["admin"],
+          }))
+        )
+          return;
+
         if (newLimit < 0 || newLimit > 100)
           return sendNotificationToUser(
             socket,
