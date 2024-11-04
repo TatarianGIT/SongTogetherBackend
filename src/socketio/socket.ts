@@ -54,6 +54,11 @@ import {
   getSongLimit,
   insertDefaultLimit,
 } from "../sqlite3/songLimitServieces.js";
+import {
+  addToBannedWordList,
+  clearBannedWordList,
+  getBannedWordList,
+} from "../sqlite3/bannedWordServieces.js";
 
 dotenv.config({ path: `.env.${process.env.NODE_ENV}` });
 
@@ -596,9 +601,70 @@ const configureSocketIO = (httpsServer: HttpsServer) => {
 
         return io.emit("updateSongLimit", newLimit);
       } catch (error) {
-        console.log("socket setNewLimit");
+        console.log("socket setNewLimit", error);
       }
     });
+
+    socket.on("getBannedWordList", async () => {
+      try {
+        if (
+          !(await hasRequiredRole({
+            userRole: user.role,
+            requiredRole: ["admin"],
+          }))
+        )
+          return;
+
+        const wordList = await getBannedWordList();
+
+        socket.emit("updateBannedWordList", wordList);
+      } catch (error) {
+        console.log("socket getBannedWordList", error);
+      }
+    });
+
+    socket.on(
+      "setNewBannedWordList",
+      async (wordList: { id: number; word: string }[]) => {
+        try {
+          if (
+            !(await hasRequiredRole({
+              userRole: user.role,
+              requiredRole: ["admin"],
+            }))
+          )
+            return;
+
+          await clearBannedWordList();
+
+          let changes: number = 0;
+          for (let item of wordList as { id: number; word: string }[]) {
+            const result = await addToBannedWordList(item.word);
+            if (result?.changes === 1) changes += 1;
+          }
+
+          if (wordList.length === changes) {
+            sendNotificationToUser(
+              socket,
+              "Success!",
+              "New banned word list has been set up!",
+              "default"
+            );
+          } else {
+            sendNotificationToUser(
+              socket,
+              "Unexprected error!",
+              "Something went wrong.",
+              "destructive"
+            );
+          }
+
+          socket.emit("updateBannedWordList", wordList);
+        } catch (error) {
+          console.log("socket getBannedWordList", error);
+        }
+      }
+    );
   });
 };
 
