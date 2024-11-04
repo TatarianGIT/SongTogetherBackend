@@ -51,3 +51,10 @@ db.exec(`
       limit_value INTEGER NOT NULL
     );
   `);
+
+db.exec(`
+    CREATE TABLE IF NOT EXISTS bannedWord (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      word TEXT NOT NULL
+    );
+  `);
