@@ -2,9 +2,10 @@ import path, { dirname } from "path";
 import fs from "fs";
 import { Socket } from "socket.io";
 import { sendNotificationToUser } from "../socketio/helpers.js";
-import { bannedWords, maxVideoDuration } from "./ytdl.js";
+import { maxVideoDuration } from "./ytdl.js";
 import { mainDirectory } from "../envVars.js";
 import { SongQueue } from "../types/index.js";
+import { getBannedWordList } from "../sqlite3/bannedWordServieces.js";
 
 export async function deleteDirectoryWithContent({
   directoryPath,
@@ -78,16 +79,17 @@ export const listDirectories = async (
   }
 };
 
-export const isBannedWordInTitle = (
-  title: string,
-  bannedWords: string[]
-): string | undefined => {
+export const isBannedWordInTitle = async (
+  title: string
+): Promise<string | undefined> => {
   const lowerCaseTitle = title.toLocaleLowerCase();
+  const bannedWords = await getBannedWordList();
+
   let returnedWord: string | undefined;
 
-  bannedWords.some((word) =>
-    lowerCaseTitle.includes(word.toLocaleLowerCase())
-      ? (returnedWord = word)
+  bannedWords?.some((item) =>
+    lowerCaseTitle.includes(item.word.toLocaleLowerCase())
+      ? (returnedWord = item.word)
       : (returnedWord = undefined)
   );
 
@@ -165,7 +167,7 @@ export const isVideoSupported = async (
     return false;
   }
 
-  const returnedWord = isBannedWordInTitle(videoDetails.title, bannedWords);
+  const returnedWord = await isBannedWordInTitle(videoDetails.title);
 
   if (returnedWord) {
     console.log(`Video contains banned words: ${returnedWord}`);

@@ -1,6 +1,13 @@
 import { db } from "./db.js";
 
-export const getBannedWordList = async (): Promise<string[] | undefined> => {
+type BannedWord = {
+  id: number;
+  word: string;
+};
+
+export const getBannedWordList = async (): Promise<
+  BannedWord[] | undefined
+> => {
   try {
     const select = (await db
       .prepare(
@@ -9,7 +16,7 @@ export const getBannedWordList = async (): Promise<string[] | undefined> => {
           FROM bannedWord \
         "
       )
-      .all()) as string[];
+      .all()) as BannedWord[];
 
     if (!select) return undefined;
 
