@@ -1,7 +1,7 @@
 
 # Backend for SongTogether
 
-A web application that allows users to listen to music simultaneously.
+SongTogether is a web application that allows users to listen to music simultaneously.
 
 ### Dashboard preview:
 <img src="images/dashboard.png" alt="Dashboard Preview" width="60%">
