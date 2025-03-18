@@ -3,6 +3,13 @@
 
 A web application that allows users to listen to music simultaneously.
 
+### Dashboard preview:
+<img src="images/dashboard.png" alt="Dashboard Preview" width="60%">
+
+### Admin panel preview:
+<img src="images/admin_panel.png" alt="Admin Panel Preview" width="60%">
+
+
 ## Features
 
 ### User Features
