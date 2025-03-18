@@ -1,31 +1,24 @@
-import fs, { promises } from "fs";
 import ytdl, { videoInfo } from "@distube/ytdl-core";
-import ffmpeg from "fluent-ffmpeg";
+import { exec } from "child_process";
 import ffmpegPath from "ffmpeg-static";
-import { promisify } from "util";
-import { pipeline as streamPipeline } from "stream";
-import { convertToHls, mergeSegments } from "./ffmpeg.js";
+import ffmpeg from "fluent-ffmpeg";
+import { promises } from "fs";
+import { Socket } from "socket.io";
+import util from "util";
+import { mainDirectory } from "../envVars.js";
 import {
   sendNotificationToAll,
   sendNotificationToUser,
 } from "../socketio/helpers.js";
-import { Socket } from "socket.io";
-import { mainDirectory } from "../envVars.js";
-import { cookies } from "./cookies.js";
-import { proxyAuth, proxyList } from "./proxy.js";
-import { exec } from "child_process";
-import util from "util";
-
-const pipeline = promisify(streamPipeline);
+import { convertToHls, mergeSegments } from "./ffmpeg.js";
 
 ffmpeg.setFfmpegPath(ffmpegPath!);
 
 export const maxVideoDuration = 1800; // 30 mins
-export const bannedWords = ["blacha", "2115", "chivas"];
 
-export let proxyIndex = 0;
-let proxy = proxyList[0];
-let agent = ytdl.createProxyAgent({ uri: `http://${proxy.uri}:${proxy.port}` });
+// export let proxyIndex = 0;
+// let proxy = proxyList[0];
+// let agent = ytdl.createProxyAgent({ uri: `http://${proxy.uri}:${proxy.port}` });
 
 export type VideoDetails = {
   videoUrl: string;
@@ -43,7 +36,7 @@ export const getVideoDetailsFromYt = async (
   let videoDetails = null;
 
   try {
-    const data: videoInfo = await ytdl.getInfo(videoUrl, { agent });
+    const data: videoInfo = await ytdl.getInfo(videoUrl);
     const videoId = ytdl.getVideoID(videoUrl);
 
     const isLive = data.videoDetails.liveBroadcastDetails?.isLiveNow;
@@ -59,30 +52,30 @@ export const getVideoDetailsFromYt = async (
       isLive,
     };
 
-    console.log(`Found ${videoDetails.title} using proxy id: ${proxyIndex}`);
+    // console.log(`Found ${videoDetails.title} using proxy id: ${proxyIndex}`);
 
     if (videoDetails) return videoDetails;
   } catch (error: any) {
-    if (
-      error instanceof Error &&
-      (error.message.includes("403") || error.message.includes("bot"))
-    ) {
-      console.log(`Switching proxy to number ${proxyIndex}`);
+    // if (
+    //   error instanceof Error &&
+    //   (error.message.includes("403") || error.message.includes("bot"))
+    // ) {
+    //   console.log(`Switching proxy to number ${proxyIndex}`);
 
-      proxyIndex += 1;
+    //   proxyIndex += 1;
 
-      proxy = proxyList[proxyIndex];
-      agent = ytdl.createProxyAgent({
-        uri: `http://${proxy.uri}:${proxy.port}`,
-      });
+    //   proxy = proxyList[proxyIndex];
+    //   agent = ytdl.createProxyAgent({
+    //     uri: `http://${proxy.uri}:${proxy.port}`,
+    //   });
 
-      return await getVideoDetailsFromYt(videoUrl);
-    }
+    //   return await getVideoDetailsFromYt(videoUrl);
+    // }
 
-    console.error(
-      `Proxy ${proxyIndex}. ${proxy.uri}:${proxy.port} failed with error:`,
-      error
-    );
+    // console.error(
+    //   `Proxy ${proxyIndex}. ${proxy.uri}:${proxy.port} failed with error:`,
+    //   error
+    // );
 
     if (socket) {
       sendNotificationToUser(
@@ -157,7 +150,7 @@ async function downloadSegment(
     let format = "140"; // audio in medium quality
 
     if (segment === "video") {
-      const info = await ytdl.getInfo(url, { agent });
+      const info = await ytdl.getInfo(url);
 
       const videoItagPreferences = [135, 134, 133]; // 480p and lower
       let availableItags: number[] = [];
@@ -175,8 +168,8 @@ async function downloadSegment(
       format = availableItags[0].toString();
     }
 
-    let command = `yt-dlp -f ${format} '${videoId}' \
-     --proxy socks5://${proxyAuth.username}:${proxyAuth.password}@${proxy.uri}:${proxy.port} \
+    let command = `yt-dlp '${videoId}' \
+     -f ${format} \
      -o '${path}'`;
 
     console.log(`Executing command: ${command}`);
@@ -190,18 +183,18 @@ async function downloadSegment(
   } catch (error) {
     const errorMessage = (error as Error).message;
 
-    if (errorMessage.includes("bot") || errorMessage.includes("403")) {
-      console.error("Changing proxy...");
+    // if (errorMessage.includes("bot") || errorMessage.includes("403")) {
+    //   console.error("Changing proxy...");
 
-      proxyIndex += 1;
-      proxy = proxyList[proxyIndex];
-      agent = ytdl.createProxyAgent({
-        uri: `http://${proxy.uri}:${proxy.port}`,
-      });
+    //   proxyIndex += 1;
+    //   proxy = proxyList[proxyIndex];
+    //   agent = ytdl.createProxyAgent({
+    //     uri: `http://${proxy.uri}:${proxy.port}`,
+    //   });
 
-      await downloadSegment(url, videoId, path, segment);
-    } else {
-      console.error("An error occurred:", errorMessage);
-    }
+    //   await downloadSegment(url, videoId, path, segment);
+    // } else {
+    //   console.error("An error occurred:", errorMessage);
+    // }
   }
 }
