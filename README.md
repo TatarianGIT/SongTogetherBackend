@@ -13,18 +13,18 @@ SongTogether is a web application that allows users to listen to music simultane
 ## Features
 
 ### User Features
-- 🔐 **Discord OAuth**: Login using Discord credentials.
-- 🎧 **Real-Time Sync**: Listen to the same song with others in a room.
-- 🔎 **Search Songs**: Search songs by keywords or simply provide song's YouTube URL.
-- ❤️ **Favorites**: Save favorite songs for quick access.
-- 🎵 **Queue Management**: Add songs to a shared queue
-- ⏭ **Vote to Skip**: Democratic system of skipping songs.
+- **Discord OAuth**: Login using Discord credentials.
+- **Real-Time Sync**: Listen to the same song with others in a room.
+- **Search Songs**: Search songs by keywords or simply provide song's YouTube URL.
+- **Favorites**: Save favorite songs for quick access.
+- **Queue Management**: Add songs to a shared queue
+- **Vote to Skip**: Democratic system of skipping songs.
 
 
 ### Admin Features
-- 👑 **Role Management**: Assign roles to users.
-- ⚖️ **Song Limits**: Set maximum songs in queue.
-- 🚫 **Banned Words Filter**: Block songs with prohibited keywords in titles.
+- **Role Management**: Assign roles to users.
+- **Song Limits**: Set maximum songs in queue.
+- **Banned Words Filter**: Block songs with prohibited keywords in titles.
 
 ## Tech Stack
 
