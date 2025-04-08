@@ -3,11 +3,20 @@
 
 SongTogether is a web application that allows users to listen to music simultaneously.
 
-### Dashboard preview:
-<img src="images/dashboard.png" alt="Dashboard Preview" width="60%">
+### Dashboard:
+<img src="images/dashboard.jpg" alt="Dashboard" width="60%">
 
-### Admin panel preview:
-<img src="images/admin_panel.png" alt="Admin Panel Preview" width="60%">
+### Favourites list:
+<img src="images/favourites_list.jpg" alt="Favourites list" width="60%">
+
+### Query search:
+<img src="images/query_search.jpg" alt="Query search " width="60%">
+
+### Admin panel:
+<img src="images/admin_panel.jpg" alt="Admin Panel" width="60%">
+
+### User without required role:
+<img src="images/role_missing.jpg" alt="User without required role" width="60%">
 
 
 ## Features
