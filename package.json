@@ -26,7 +26,7 @@
   },
   "dependencies": {
     "@auth/express": "^0.6.0",
-    "@distube/ytdl-core": "^4.14.4",
+    "@distube/ytdl-core": "^4.16.8",
     "@ffmpeg-installer/ffmpeg": "^1.1.0",
     "@lucia-auth/adapter-sqlite": "^3.0.2",
     "@types/cookie-parser": "^1.4.7",
